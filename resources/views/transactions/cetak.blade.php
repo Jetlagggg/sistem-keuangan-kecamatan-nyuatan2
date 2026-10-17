@@ -30,7 +30,7 @@
         <tr>
            <td width="15%" class="text-center">
                 @php
-                    $logoPath = public_path('img/kubar.png');
+                    $logoPath = public_path(config('laporan.logo'));
                 @endphp
 
                 @if (file_exists($logoPath))
@@ -39,9 +39,9 @@
             </td>
             
             <td width="85%" class="text-center">
-                <h2 style="margin:0; font-size: 18px; text-transform: uppercase;">PEMERINTAH KABUPATEN KUTAI BARAT</h2>
-                <h1 style="margin:5px 0; font-size: 20px; text-transform: uppercase;">KANTOR KECAMATAN NYUATAN</h1>
-                <p style="margin:0; font-size: 11px; font-style: italic;">Alamat: Jl. Jaya Karti No I RT III Kode Pos 75565 DEMPAR</p>
+                <h2 style="margin:0; font-size: 18px; text-transform: uppercase;">{{ config('laporan.instansi.pemerintah') }}</h2>
+                <h1 style="margin:5px 0; font-size: 20px; text-transform: uppercase;">{{ config('laporan.instansi.kantor') }}</h1>
+                <p style="margin:0; font-size: 11px; font-style: italic;">Alamat: {{ config('laporan.instansi.alamat') }}</p>
             </td>
         </tr>
     </table>
@@ -100,7 +100,7 @@
     <div class="footer">
         <p>Bendahara Pengeluaran,</p>
         <br><br><br>
-        <p><strong style="text-decoration: underline;">LIDIA MANOPO</strong><br>NIP. 19850831 201001 2 023</p>
+        <p><strong style="text-decoration: underline;">{{ config('laporan.bendahara.nama') }}</strong><br>NIP. {{ config('laporan.bendahara.nip') }}</p>
     </div>
 
 </body>

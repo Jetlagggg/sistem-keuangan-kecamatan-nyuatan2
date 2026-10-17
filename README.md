@@ -13,13 +13,16 @@ Aplikasi web monitoring & evaluasi (Monev) anggaran serta pencatatan transaksi k
 - **Riwayat Aktivitas** (audit trail) — mencatat login, logout, dan perubahan data beserta IP.
 - **Manajemen Pengguna** (admin) — tambah/ubah/hapus akun, atur role, dan reset kata sandi.
 - **Arsip Data** (admin) — data yang dihapus dapat dipulihkan atau dihapus permanen.
+- **Profil Saya** — setiap pengguna dapat mengubah nama, email, dan kata sandinya sendiri.
+- **Halaman error kustom** (403/404/500) berbahasa Indonesia.
 
 ## Kebutuhan
 
 - PHP 8.2+
 - Composer
-- Node.js 20+ & npm
 - MySQL/MariaDB (atau SQLite untuk pengembangan)
+
+> Aset frontend (Bootstrap, Font Awesome, Google Fonts) dimuat via CDN, sehingga Node.js/npm tidak diperlukan.
 
 ## Instalasi
 
@@ -29,8 +32,6 @@ cp .env.example .env
 php artisan key:generate
 # sesuaikan kredensial database pada .env
 php artisan migrate --seed
-npm install
-npm run build
 php artisan serve
 ```
 
@@ -56,14 +57,42 @@ php artisan serve
 
 ```bash
 php artisan test
+php vendor/bin/pint --test
 ```
+
+## Deployment Produksi
+
+1. Set `.env`: `APP_ENV=production`, `APP_DEBUG=false`, `APP_URL=https://...`,
+   `SESSION_SECURE_COOKIE=true`, dan kredensial database.
+2. Cache konfigurasi & rute: `php artisan config:cache && php artisan route:cache && php artisan view:cache`.
+3. Jalankan migrasi: `php artisan migrate --force`.
+4. Arahkan document root web server ke folder `public/` (bukan root proyek).
+5. Pastikan HTTPS aktif — aplikasi memaksa skema HTTPS saat `APP_ENV=production`.
+6. Jika di balik reverse-proxy/load balancer, `TrustProxies` sudah diaktifkan
+   (`bootstrap/app.php`) agar IP klien & deteksi HTTPS benar.
+
+## Backup
+
+Data keuangan wajib di-backup berkala. Contoh (MySQL/MariaDB):
+
+```bash
+mysqldump -u USER -p NAMA_DB > backup-$(date +%F).sql
+# pemulihan
+mysql -u USER -p NAMA_DB < backup-2026-01-01.sql
+```
+
+Untuk SQLite cukup salin berkas `database/database.sqlite`. Simpan salinan di luar
+server dan uji proses pemulihan secara berkala.
 
 ## Struktur Singkat
 
-- `app/Http/Controllers` — Auth, Category (Monev & Dana), Transaction, ActivityLog, User, Trash.
+- `app/Http/Controllers` — Auth, Category (Monev & Dana), Transaction, ActivityLog, User, Trash, Profile.
 - `app/Policies` — otorisasi role.
 - `app/Models` — User, Category, BudgetStage, Transaction, ActivityLog.
 - `app/Http/Middleware/SecurityHeaders.php` — header keamanan.
+- `resources/views/layouts/app.blade.php` — layout bersama (head, navbar, alert, formatter rupiah).
+- `resources/views/partials` — alert & modal input dana bersama.
+- `config/laporan.php` — kop instansi & data bendahara untuk laporan PDF.
 
 ## Lisensi
 

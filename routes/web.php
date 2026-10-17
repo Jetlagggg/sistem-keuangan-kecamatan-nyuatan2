@@ -3,6 +3,7 @@
 use App\Http\Controllers\ActivityLogController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\TrashController;
 use App\Http\Controllers\UserController;
@@ -40,6 +41,10 @@ Route::middleware(['auth'])->group(function () {
 
     // 3. Riwayat Aktivitas (audit trail)
     Route::get('/activity-logs', [ActivityLogController::class, 'index'])->name('activity-logs.index');
+
+    // === PROFIL SAYA (semua role) ===
+    Route::get('/profil', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::put('/profil', [ProfileController::class, 'update'])->name('profile.update');
 
     // === MANAJEMEN PENGGUNA (admin) ===
     Route::resource('users', UserController::class)
