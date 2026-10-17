@@ -16,4 +16,14 @@ class BudgetStagePolicy
     {
         return $user->isAdmin();
     }
+
+    public function restore(User $user, BudgetStage $budgetStage): bool
+    {
+        return $user->isAdmin();
+    }
+
+    public function forceDelete(User $user, BudgetStage $budgetStage): bool
+    {
+        return $user->isAdmin();
+    }
 }

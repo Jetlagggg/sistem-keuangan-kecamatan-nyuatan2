@@ -17,9 +17,17 @@
                 <a href="{{ route('transactions.index') }}" class="btn btn-outline-light btn-sm me-2">
                     <i class="fa-solid fa-list me-1"></i> Transaksi
                 </a>
-                <a href="{{ route('categories.index') }}" class="btn btn-outline-light btn-sm">
+                <a href="{{ route('categories.index') }}" class="btn btn-outline-light btn-sm me-2">
                     <i class="fa-solid fa-tags me-1"></i> Anggaran
                 </a>
+                @if(auth()->user()->isAdmin())
+                <a href="{{ route('users.index') }}" class="btn btn-outline-light btn-sm me-2">
+                    <i class="fa-solid fa-users-gear me-1"></i> Pengguna
+                </a>
+                <a href="{{ route('arsip.index') }}" class="btn btn-outline-light btn-sm">
+                    <i class="fa-solid fa-box-archive me-1"></i> Arsip
+                </a>
+                @endif
             </div>
         </div>
     </nav>

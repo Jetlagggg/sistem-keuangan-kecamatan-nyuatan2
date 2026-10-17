@@ -26,4 +26,14 @@ class CategoryPolicy
     {
         return $user->isAdmin();
     }
+
+    public function restore(User $user, Category $category): bool
+    {
+        return $user->isAdmin();
+    }
+
+    public function forceDelete(User $user, Category $category): bool
+    {
+        return $user->isAdmin();
+    }
 }

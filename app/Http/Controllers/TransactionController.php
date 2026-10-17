@@ -8,6 +8,7 @@ use App\Models\Category;
 use App\Models\Transaction;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 class TransactionController extends Controller
@@ -47,17 +48,19 @@ class TransactionController extends Controller
 
         $nominal = $this->parseNominal($request->nominal);
 
-        $this->guardBudget($nominal, (int) $request->category_id, (int) $request->budget_stage_id);
+        $transaction = DB::transaction(function () use ($request, $nominal) {
+            $this->guardBudget($nominal, (int) $request->category_id, (int) $request->budget_stage_id);
 
-        $transaction = Transaction::create([
-            'tanggal' => $request->tanggal,
-            'category_id' => $request->category_id,
-            'budget_stage_id' => $request->budget_stage_id,
-            'nominal' => $nominal,
-            'penerima' => $request->penerima,
-            'keterangan' => $request->keterangan,
-            'jenis' => 'keluar',
-        ]);
+            return Transaction::create([
+                'tanggal' => $request->tanggal,
+                'category_id' => $request->category_id,
+                'budget_stage_id' => $request->budget_stage_id,
+                'nominal' => $nominal,
+                'penerima' => $request->penerima,
+                'keterangan' => $request->keterangan,
+                'jenis' => 'keluar',
+            ]);
+        });
 
         ActivityLog::record('create', 'transactions', $transaction->id, 'Menambahkan transaksi');
 
@@ -80,16 +83,18 @@ class TransactionController extends Controller
 
         $nominal = $this->parseNominal($request->nominal);
 
-        $this->guardBudget($nominal, (int) $request->category_id, (int) $request->budget_stage_id, $transaction);
+        DB::transaction(function () use ($request, $transaction, $nominal) {
+            $this->guardBudget($nominal, (int) $request->category_id, (int) $request->budget_stage_id, $transaction);
 
-        $transaction->update([
-            'tanggal' => $request->tanggal,
-            'category_id' => $request->category_id,
-            'budget_stage_id' => $request->budget_stage_id,
-            'nominal' => $nominal,
-            'penerima' => $request->penerima,
-            'keterangan' => $request->keterangan,
-        ]);
+            $transaction->update([
+                'tanggal' => $request->tanggal,
+                'category_id' => $request->category_id,
+                'budget_stage_id' => $request->budget_stage_id,
+                'nominal' => $nominal,
+                'penerima' => $request->penerima,
+                'keterangan' => $request->keterangan,
+            ]);
+        });
 
         ActivityLog::record('update', 'transactions', $transaction->id, 'Mengubah transaksi');
 
@@ -151,8 +156,12 @@ class TransactionController extends Controller
             });
         }
 
-        if ($request->filled('start_date') && $request->filled('end_date')) {
-            $query->whereBetween('tanggal', [$request->start_date, $request->end_date]);
+        if ($request->filled('start_date')) {
+            $query->where('tanggal', '>=', $request->start_date);
+        }
+
+        if ($request->filled('end_date')) {
+            $query->where('tanggal', '<=', $request->end_date);
         }
 
         if ($request->filled('budget_stage_id')) {
@@ -190,8 +199,8 @@ class TransactionController extends Controller
             throw ValidationException::withMessages(['nominal' => 'Nominal harus lebih dari 0.']);
         }
 
-        $category = Category::findOrFail($categoryId);
-        $stage = BudgetStage::findOrFail($stageId);
+        $category = Category::whereKey($categoryId)->lockForUpdate()->firstOrFail();
+        $stage = BudgetStage::whereKey($stageId)->lockForUpdate()->firstOrFail();
 
         $categoryUsed = Transaction::where('category_id', $categoryId)
             ->where('jenis', 'keluar')

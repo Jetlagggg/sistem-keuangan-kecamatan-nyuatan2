@@ -36,9 +36,17 @@
                 <a href="{{ route('activity-logs.index') }}" class="btn btn-outline-light btn-sm me-2">
                     <i class="fa-solid fa-clock-rotate-left me-1"></i> Riwayat
                 </a>
-                <a href="{{ route('categories.index') }}" class="btn btn-outline-light btn-sm me-3">
+                <a href="{{ route('categories.index') }}" class="btn btn-outline-light btn-sm me-2">
                     <i class="fa-solid fa-tags me-1"></i> Atur Anggaran
                 </a>
+                @if(auth()->user()->isAdmin())
+                <a href="{{ route('users.index') }}" class="btn btn-outline-light btn-sm me-2">
+                    <i class="fa-solid fa-users-gear me-1"></i> Pengguna
+                </a>
+                <a href="{{ route('arsip.index') }}" class="btn btn-outline-light btn-sm me-2">
+                    <i class="fa-solid fa-box-archive me-1"></i> Arsip
+                </a>
+                @endif
                 <form action="{{ route('logout') }}" method="POST" class="d-inline">
                     @csrf <button class="btn btn-danger btn-sm"><i class="fa-solid fa-power-off"></i></button>
                 </form>
@@ -118,7 +126,7 @@
                     <div class="card-body p-3 bg-white rounded">
                         <form action="{{ route('transactions.index') }}" method="GET" id="searchForm">
                             <div class="row g-2 align-items-end">
-                                <div class="col-md-3">
+                                <div class="col-md-2">
                                     <label class="small text-muted fw-bold">Filter GU</label>
                                     <select name="budget_stage_id" class="form-select form-select-sm" onchange="this.form.submit()">
                                         <option value="">-- Semua GU --</option>
@@ -130,17 +138,21 @@
                                     </select>
                                 </div>
                                 <div class="col-md-3">
-                                    <label class="small text-muted fw-bold">Cari Uraian</label>
-                                    <input type="text" name="keyword" class="form-control form-control-sm" value="{{ request('keyword') }}">
+                                    <label class="small text-muted fw-bold">Cari Uraian / Penerima</label>
+                                    <input type="text" name="keyword" class="form-control form-control-sm" value="{{ request('keyword') }}" placeholder="Kata kunci...">
                                 </div>
-                                <div class="col-md-3">
-                                    <label class="small text-muted fw-bold">Tanggal</label>
-                                    <input type="date" name="start_date" class="form-control form-control-sm" value="{{ request('start_date') }}" onchange="this.form.submit()">
+                                <div class="col-md-2">
+                                    <label class="small text-muted fw-bold">Dari Tanggal</label>
+                                    <input type="date" name="start_date" class="form-control form-control-sm" value="{{ request('start_date') }}">
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="small text-muted fw-bold">Sampai Tanggal</label>
+                                    <input type="date" name="end_date" class="form-control form-control-sm" value="{{ request('end_date') }}">
                                 </div>
                                 <div class="col-md-3 d-flex gap-2">
-                                    <button type="submit" class="btn btn-dark btn-sm w-100 fw-bold"><i class="fa-solid fa-magnifying-glass"></i></button>
+                                    <button type="submit" class="btn btn-dark btn-sm w-100 fw-bold"><i class="fa-solid fa-magnifying-glass me-1"></i> Cari</button>
                                     <a href="{{ route('transactions.cetak', request()->all()) }}" target="_blank" class="btn btn-secondary btn-sm w-100 fw-bold">
-                                        <i class="fa-solid fa-print"></i> CETAK
+                                        <i class="fa-solid fa-print me-1"></i> CETAK
                                     </a>
                                 </div>
                             </div>
@@ -157,7 +169,7 @@
                                     @forelse($transactions as $t)
                                     <tr>
                                         <td class="ps-4 small text-muted">
-                                            {{ date('d/m/Y', strtotime($t->tanggal)) }}
+                                            {{ $t->tanggal->format('d/m/Y') }}
                                             <div class="mt-1"><span class="badge bg-light text-dark border">{{ $t->budgetStage->nama_tahap ?? 'Non-GU' }}</span></div>
                                         </td>
                                         <td>

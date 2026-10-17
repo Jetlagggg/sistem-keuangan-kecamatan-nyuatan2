@@ -49,9 +49,13 @@ Pengujian memakai SQLite in-memory (`phpunit.xml`), jadi tidak perlu database un
 - **Role pengguna** (`users.role`): `admin` (penuh), `bendahara` (buat/ubah), `viewer` (read-only).
   Otorisasi lewat Policy di `app/Policies` (`create`/`update` = `canManage()`, `delete` = `isAdmin()`).
 - **Soft delete** aktif pada `Transaction`, `Category`, `BudgetStage` (`deleted_at`).
-  Hapus = arsip; query default mengabaikan baris terhapus.
-- **Batas anggaran** dijaga di server oleh `TransactionController::guardBudget()`: pengeluaran
-  tidak boleh melebihi sisa pagu pos maupun sisa dana tahap.
+  Hapus = arsip; query default mengabaikan baris terhapus. Pemulihan/hapus permanen
+  (admin) lewat `TrashController` (`/arsip`).
+- **Manajemen pengguna** khusus admin (`UserPolicy`, `UserController`); admin terakhir
+  tidak bisa dihapus atau diturunkan role-nya.
+- **Batas anggaran** dijaga di server oleh `TransactionController::guardBudget()` di dalam
+  `DB::transaction` + `lockForUpdate` (aman dari input bersamaan): pengeluaran tidak boleh
+  melebihi sisa pagu pos maupun sisa dana tahap.
 - **Audit trail**: setiap perubahan memanggil `ActivityLog::record(...)`.
 - **Keamanan**: middleware `App\Http\Middleware\SecurityHeaders` menambahkan CSP & header
   keamanan ke semua respons; login dibatasi rate limit. HTTPS dipaksa saat `APP_ENV=production`.

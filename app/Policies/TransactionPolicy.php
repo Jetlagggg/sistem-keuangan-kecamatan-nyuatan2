@@ -26,4 +26,14 @@ class TransactionPolicy
     {
         return $user->isAdmin();
     }
+
+    public function restore(User $user, Transaction $transaction): bool
+    {
+        return $user->isAdmin();
+    }
+
+    public function forceDelete(User $user, Transaction $transaction): bool
+    {
+        return $user->isAdmin();
+    }
 }

@@ -4,6 +4,8 @@ use App\Http\Controllers\ActivityLogController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\TransactionController;
+use App\Http\Controllers\TrashController;
+use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
 // --- 1. HALAMAN LOGIN (Tamu) ---
@@ -38,5 +40,18 @@ Route::middleware(['auth'])->group(function () {
 
     // 3. Riwayat Aktivitas (audit trail)
     Route::get('/activity-logs', [ActivityLogController::class, 'index'])->name('activity-logs.index');
+
+    // === MANAJEMEN PENGGUNA (admin) ===
+    Route::resource('users', UserController::class)
+        ->only(['index', 'store', 'update', 'destroy']);
+
+    // === ARSIP / PEMULIHAN DATA (soft delete) ===
+    Route::get('/arsip', [TrashController::class, 'index'])->name('arsip.index');
+    Route::post('/arsip/transactions/{id}/restore', [TrashController::class, 'restoreTransaction'])->name('arsip.transactions.restore');
+    Route::post('/arsip/categories/{id}/restore', [TrashController::class, 'restoreCategory'])->name('arsip.categories.restore');
+    Route::post('/arsip/budget-stages/{id}/restore', [TrashController::class, 'restoreBudgetStage'])->name('arsip.budget-stages.restore');
+    Route::delete('/arsip/transactions/{id}', [TrashController::class, 'forceDeleteTransaction'])->name('arsip.transactions.destroy');
+    Route::delete('/arsip/categories/{id}', [TrashController::class, 'forceDeleteCategory'])->name('arsip.categories.destroy');
+    Route::delete('/arsip/budget-stages/{id}', [TrashController::class, 'forceDeleteBudgetStage'])->name('arsip.budget-stages.destroy');
 
 });

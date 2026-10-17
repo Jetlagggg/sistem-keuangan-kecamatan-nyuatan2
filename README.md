@@ -11,6 +11,8 @@ Aplikasi web monitoring & evaluasi (Monev) anggaran serta pencatatan transaksi k
 - **Transaksi Harian** — input, ubah, hapus (soft delete) dengan validasi pagu di sisi server.
 - **Cetak Laporan PDF** (dompdf) dengan filter periode, kata kunci, dan sumber dana.
 - **Riwayat Aktivitas** (audit trail) — mencatat login, logout, dan perubahan data beserta IP.
+- **Manajemen Pengguna** (admin) — tambah/ubah/hapus akun, atur role, dan reset kata sandi.
+- **Arsip Data** (admin) — data yang dihapus dapat dipulihkan atau dihapus permanen.
 
 ## Kebutuhan
 
@@ -58,7 +60,7 @@ php artisan test
 
 ## Struktur Singkat
 
-- `app/Http/Controllers` — Auth, Category (Monev & Dana), Transaction, ActivityLog.
+- `app/Http/Controllers` — Auth, Category (Monev & Dana), Transaction, ActivityLog, User, Trash.
 - `app/Policies` — otorisasi role.
 - `app/Models` — User, Category, BudgetStage, Transaction, ActivityLog.
 - `app/Http/Middleware/SecurityHeaders.php` — header keamanan.

@@ -41,6 +41,16 @@
                     <i class="fa-solid fa-clock-rotate-left me-2"></i> Riwayat
                 </a>
 
+                @if(auth()->user()->isAdmin())
+                <a href="{{ route('users.index') }}" class="btn btn-outline-light btn-action me-2">
+                    <i class="fa-solid fa-users-gear me-2"></i> Pengguna
+                </a>
+
+                <a href="{{ route('arsip.index') }}" class="btn btn-outline-light btn-action me-2">
+                    <i class="fa-solid fa-box-archive me-2"></i> Arsip
+                </a>
+                @endif
+
                 <a href="{{ route('transactions.index') }}" class="btn btn-light btn-action">
                     <i class="fa-solid fa-arrow-left me-2"></i> Kembali ke Transaksi
                 </a>
@@ -129,7 +139,7 @@
                                 <td class="ps-4">
                                     <span class="badge bg-primary">{{ $stg->nama_tahap }}</span>
                                 </td>
-                                <td>{{ date('d M Y', strtotime($stg->tanggal_cair)) }}</td>
+                                <td>{{ $stg->tanggal_cair->format('d M Y') }}</td>
                                 <td class="text-muted small">{{ $stg->keterangan ?? '-' }}</td>
                                 <td class="text-end fw-bold">Rp {{ number_format($stg->nominal, 0, ',', '.') }}</td>
                                 <td class="text-center">
