@@ -9,20 +9,21 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
-public function up(): void
-{
-    Schema::table('categories', function (Blueprint $table) {
-        // Kita tambah kolom 'pagu' (Jatah Anggaran), default-nya 0
-        $table->bigInteger('pagu')->default(0)->after('jenis');
-    });
-}
+    public function up(): void
+    {
+        Schema::table('categories', function (Blueprint $table) {
+            // Kita tambah kolom 'pagu' (Jatah Anggaran), default-nya 0
+            $table->bigInteger('pagu')->default(0)->after('jenis');
+        });
+    }
+
     /**
      * Reverse the migrations.
      */
-   public function down(): void
-{
-    Schema::table('categories', function (Blueprint $table) {
-        $table->dropColumn('pagu');
-    });
-}
+    public function down(): void
+    {
+        Schema::table('categories', function (Blueprint $table) {
+            $table->dropColumn('pagu');
+        });
+    }
 };

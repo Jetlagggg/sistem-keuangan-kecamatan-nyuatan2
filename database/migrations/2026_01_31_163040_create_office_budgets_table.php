@@ -9,14 +9,14 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
-   public function up(): void
-{
-    Schema::create('office_budgets', function (Blueprint $table) {
-        $table->id();
-        $table->bigInteger('nominal')->default(0); // Ini buat nyimpen angka jatah kantor
-        $table->timestamps();
-    });
-}
+    public function up(): void
+    {
+        Schema::create('office_budgets', function (Blueprint $table) {
+            $table->id();
+            $table->bigInteger('nominal')->default(0); // Ini buat nyimpen angka jatah kantor
+            $table->timestamps();
+        });
+    }
 
     /**
      * Reverse the migrations.

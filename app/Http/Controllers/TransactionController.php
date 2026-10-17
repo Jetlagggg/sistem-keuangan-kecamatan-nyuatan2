@@ -2,13 +2,13 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Transaction;
-use App\Models\Category;
-use App\Models\BudgetStage;
 use App\Models\ActivityLog;
+use App\Models\BudgetStage;
+use App\Models\Category;
+use App\Models\Transaction;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
-use Barryvdh\DomPDF\Facade\Pdf;
 
 class TransactionController extends Controller
 {
@@ -118,7 +118,7 @@ class TransactionController extends Controller
         if ($request->filled('budget_stage_id')) {
             $gu = BudgetStage::find($request->budget_stage_id);
             $totalMasuk = $gu ? $gu->nominal : 0;
-            $judulLaporan = 'Laporan Transaksi - ' . ($gu ? $gu->nama_tahap : '');
+            $judulLaporan = 'Laporan Transaksi - '.($gu ? $gu->nama_tahap : '');
         } else {
             $totalMasuk = BudgetStage::sum('nominal');
             $judulLaporan = 'Laporan Transaksi Keuangan (Semua Dana)';
@@ -146,8 +146,8 @@ class TransactionController extends Controller
         if ($request->filled('keyword')) {
             $keyword = $this->escapeLike($request->keyword);
             $query->where(function ($q) use ($keyword) {
-                $q->where('keterangan', 'like', '%' . $keyword . '%')
-                  ->orWhere('penerima', 'like', '%' . $keyword . '%');
+                $q->where('keterangan', 'like', '%'.$keyword.'%')
+                    ->orWhere('penerima', 'like', '%'.$keyword.'%');
             });
         }
 
@@ -194,24 +194,26 @@ class TransactionController extends Controller
         $stage = BudgetStage::findOrFail($stageId);
 
         $categoryUsed = Transaction::where('category_id', $categoryId)
+            ->where('jenis', 'keluar')
             ->when($existing, fn ($q) => $q->where('id', '!=', $existing->id))
             ->sum('nominal');
         $sisaPos = $category->budget - $categoryUsed;
 
         $stageUsed = Transaction::where('budget_stage_id', $stageId)
+            ->where('jenis', 'keluar')
             ->when($existing, fn ($q) => $q->where('id', '!=', $existing->id))
             ->sum('nominal');
         $sisaStage = $stage->nominal - $stageUsed;
 
         if ($nominal > $sisaPos) {
             throw ValidationException::withMessages([
-                'nominal' => 'Melebihi sisa pagu Pos "' . $category->nama . '". Sisa: Rp ' . number_format($sisaPos, 0, ',', '.'),
+                'nominal' => 'Melebihi sisa pagu Pos "'.$category->nama.'". Sisa: Rp '.number_format($sisaPos, 0, ',', '.'),
             ]);
         }
 
         if ($nominal > $sisaStage) {
             throw ValidationException::withMessages([
-                'nominal' => 'Melebihi sisa dana tahap "' . $stage->nama_tahap . '". Sisa: Rp ' . number_format($sisaStage, 0, ',', '.'),
+                'nominal' => 'Melebihi sisa dana tahap "'.$stage->nama_tahap.'". Sisa: Rp '.number_format($sisaStage, 0, ',', '.'),
             ]);
         }
     }

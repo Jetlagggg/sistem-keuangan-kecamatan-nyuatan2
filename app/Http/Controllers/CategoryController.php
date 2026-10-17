@@ -2,12 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use Illuminate\Validation\ValidationException;
+use App\Models\ActivityLog;
+use App\Models\BudgetStage;
 use App\Models\Category;
 use App\Models\Transaction;
-use App\Models\BudgetStage;
-use App\Models\ActivityLog;
+use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 
 class CategoryController extends Controller
 {
@@ -68,7 +68,7 @@ class CategoryController extends Controller
             'keterangan' => $request->keterangan,
         ]);
 
-        ActivityLog::record('create', 'budget_stages', $stage->id, 'Menambah dana ' . $stage->nama_tahap);
+        ActivityLog::record('create', 'budget_stages', $stage->id, 'Menambah dana '.$stage->nama_tahap);
 
         return redirect()->back()->with('success', 'Dana berhasil ditambahkan!');
     }
@@ -85,7 +85,7 @@ class CategoryController extends Controller
             );
         }
 
-        ActivityLog::record('delete', 'budget_stages', $budgetStage->id, 'Menghapus dana ' . $budgetStage->nama_tahap);
+        ActivityLog::record('delete', 'budget_stages', $budgetStage->id, 'Menghapus dana '.$budgetStage->nama_tahap);
 
         $budgetStage->delete();
 
@@ -107,7 +107,7 @@ class CategoryController extends Controller
             'budget' => $this->parseAmount($request->budget, 'budget'),
         ]);
 
-        ActivityLog::record('create', 'categories', $category->id, 'Membuat pos ' . $category->nama);
+        ActivityLog::record('create', 'categories', $category->id, 'Membuat pos '.$category->nama);
 
         return redirect()->route('categories.index')->with('success', 'Pos Kegiatan berhasil dibuat');
     }
@@ -127,7 +127,7 @@ class CategoryController extends Controller
             'budget' => $this->parseAmount($request->budget, 'budget'),
         ]);
 
-        ActivityLog::record('update', 'categories', $category->id, 'Mengubah pos ' . $category->nama);
+        ActivityLog::record('update', 'categories', $category->id, 'Mengubah pos '.$category->nama);
 
         return redirect()->route('categories.index')->with('success', 'Pos Kegiatan diperbarui');
     }
@@ -144,7 +144,7 @@ class CategoryController extends Controller
             );
         }
 
-        ActivityLog::record('delete', 'categories', $category->id, 'Menghapus pos ' . $category->nama);
+        ActivityLog::record('delete', 'categories', $category->id, 'Menghapus pos '.$category->nama);
 
         $category->delete();
 

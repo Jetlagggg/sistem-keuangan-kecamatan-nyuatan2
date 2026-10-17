@@ -14,7 +14,7 @@ class BudgetStage extends Model
         'nama_tahap',
         'nominal',
         'tanggal_cair',
-        'keterangan'
+        'keterangan',
     ];
 
     protected function casts(): array

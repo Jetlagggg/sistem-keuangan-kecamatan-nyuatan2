@@ -9,18 +9,18 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
-  public function up(): void
-{
-    Schema::table('transactions', function (Blueprint $table) {
-        // Tambah kolom penerima setelah kolom nominal
-        $table->string('penerima')->nullable()->after('nominal');
-    });
-}
+    public function up(): void
+    {
+        Schema::table('transactions', function (Blueprint $table) {
+            // Tambah kolom penerima setelah kolom nominal
+            $table->string('penerima')->nullable()->after('nominal');
+        });
+    }
 
-public function down(): void
-{
-    Schema::table('transactions', function (Blueprint $table) {
-        $table->dropColumn('penerima');
-    });
-}
+    public function down(): void
+    {
+        Schema::table('transactions', function (Blueprint $table) {
+            $table->dropColumn('penerima');
+        });
+    }
 };

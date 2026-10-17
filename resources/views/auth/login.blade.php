@@ -30,7 +30,6 @@
             text-align: center;
             margin-bottom: 30px;
         }
-        /* INI PERBAIKANNYA: Ukuran logo dibatasi */
         .logo-img {
             width: 100px; 
             height: auto;

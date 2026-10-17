@@ -12,7 +12,7 @@ class Category extends Model
 
     protected $fillable = [
         'nama',
-        'budget'
+        'budget',
     ];
 
     protected function casts(): array

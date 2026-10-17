@@ -20,7 +20,7 @@ class CategoryFactory extends Factory
     public function definition(): array
     {
         return [
-            'nama' => 'Pos ' . fake()->unique()->words(2, true),
+            'nama' => 'Pos '.fake()->unique()->words(2, true),
             'budget' => 1_000_000,
         ];
     }

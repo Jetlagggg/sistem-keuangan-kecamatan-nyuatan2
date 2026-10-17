@@ -30,26 +30,11 @@
         <tr>
            <td width="15%" class="text-center">
                 @php
-                    // Pakai public_path() standar
-                    $path = public_path('img/kubar.png');
-                    
-                    // Cek file
-                    if (file_exists($path)) {
-                        $type = pathinfo($path, PATHINFO_EXTENSION);
-                        $data = file_get_contents($path);
-                        $base64 = 'data:image/' . $type . ';base64,' . base64_encode($data);
-                        $found = true;
-                    } else {
-                        $found = false;
-                    }
+                    $logoPath = public_path('img/kubar.png');
                 @endphp
 
-                @if($found)
-                    <img src="{{ $base64 }}" style="height: 80px; width: auto;">
-                @else
-                    <span style="color:red; font-size:10px; font-weight:bold;">GAGAL LOAD!</span><br>
-                    <small style="font-size:8px;">Sistem mencari di:</small><br>
-                    <small style="font-size:8px; color:blue;">{{ $path }}</small>
+                @if (file_exists($logoPath))
+                    <img src="data:image/png;base64,{{ base64_encode(file_get_contents($logoPath)) }}" style="height: 80px; width: auto;">
                 @endif
             </td>
             
@@ -84,7 +69,7 @@
             @foreach($transactions as $t)
             <tr>
                 <td class="text-center">{{ $no++ }}</td>
-                <td>{{ date('d/m/Y', strtotime($t->tanggal)) }}</td>
+                <td>{{ $t->tanggal->format('d/m/Y') }}</td>
                 <td>{{ $t->category->nama ?? '-' }}</td>
                 <td>{{ $t->keterangan }}</td>
                 <td>{{ $t->penerima }}</td>

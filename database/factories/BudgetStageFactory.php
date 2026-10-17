@@ -20,7 +20,7 @@ class BudgetStageFactory extends Factory
     public function definition(): array
     {
         return [
-            'nama_tahap' => 'GU ' . fake()->unique()->numberBetween(1, 9999),
+            'nama_tahap' => 'GU '.fake()->unique()->numberBetween(1, 9999),
             'nominal' => 5_000_000,
             'tanggal_cair' => now()->toDateString(),
             'keterangan' => null,

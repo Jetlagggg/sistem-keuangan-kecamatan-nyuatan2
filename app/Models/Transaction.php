@@ -17,7 +17,7 @@ class Transaction extends Model
         'nominal',
         'penerima',
         'keterangan',
-        'jenis'
+        'jenis',
     ];
 
     protected function casts(): array
