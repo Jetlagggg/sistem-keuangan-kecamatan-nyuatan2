@@ -4,16 +4,24 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class BudgetStage extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
 
-    // Ini biar kita bisa isi kolom-kolom ini
     protected $fillable = [
-        'nama_tahap',   // UP, GU 1, GU 2...
-        'nominal',      // Jumlah Duit
-        'tanggal_cair', // Kapan cairnya
-        'keterangan'    // Catatan
+        'nama_tahap',
+        'nominal',
+        'tanggal_cair',
+        'keterangan'
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'nominal' => 'decimal:2',
+            'tanggal_cair' => 'date',
+        ];
+    }
 }

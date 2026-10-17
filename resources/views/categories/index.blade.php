@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Monev Anggaran - Kecamatan</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha384-iw3OoTErCYJJB9mCa8LNS2hbsQ7M3C0EpIsO/H5+EGAkPGc6rk+V8i04oW/K5xq0" crossorigin="anonymous">
     <style>
         body { font-family: 'Inter', sans-serif; background-color: #f8f9fa; }
         .header-monev { background-color: #1e293b; color: white; padding: 20px 0; margin-bottom: 30px; border-bottom: 4px solid #f59e0b; }
@@ -31,9 +31,15 @@
                 </div>
             </div>
             <div>
+                @can('create', App\Models\BudgetStage::class)
                 <button class="btn btn-warning btn-action me-2 text-dark shadow" data-bs-toggle="modal" data-bs-target="#modalInputGU">
                     <i class="fa-solid fa-circle-plus me-2"></i> Input Dana (GU)
                 </button>
+                @endcan
+
+                <a href="{{ route('activity-logs.index') }}" class="btn btn-outline-light btn-action me-2">
+                    <i class="fa-solid fa-clock-rotate-left me-2"></i> Riwayat
+                </a>
 
                 <a href="{{ route('transactions.index') }}" class="btn btn-light btn-action">
                     <i class="fa-solid fa-arrow-left me-2"></i> Kembali ke Transaksi
@@ -47,6 +53,20 @@
         @if(session('success'))
         <div class="alert alert-success border-0 shadow-sm mb-4">
             <i class="fa-solid fa-check-circle me-2"></i> {{ session('success') }}
+        </div>
+        @endif
+
+        @if(session('error'))
+        <div class="alert alert-danger border-0 shadow-sm mb-4">
+            <i class="fa-solid fa-triangle-exclamation me-2"></i> {{ session('error') }}
+        </div>
+        @endif
+
+        @if($errors->any())
+        <div class="alert alert-danger border-0 shadow-sm mb-4">
+            <ul class="mb-0 ps-3">
+                @foreach($errors->all() as $e) <li>{{ $e }}</li> @endforeach
+            </ul>
         </div>
         @endif
 
@@ -75,10 +95,14 @@
             <div class="col-md-4">
                 <div class="card card-summary card-sisa h-100 p-4">
                     <h6 class="text-uppercase text-white-50 fw-bold small mb-2">Sisa Alokasi Anggaran</h6>
-                    <h2 class="fw-bold {{ $sisaAlokasi < 0 ? 'text-danger' : 'text-danger' }} mb-0">
+                    <h2 class="fw-bold {{ $sisaAlokasi < 0 ? 'text-danger' : 'text-success' }} mb-0">
                         Rp {{ number_format($sisaAlokasi, 0, ',', '.') }}
                     </h2>
-                    <small class="opacity-50">Dana yang belum dibagi ke Pos Kegiatan</small>
+                    @if($sisaAlokasi < 0)
+                        <small class="text-danger fw-bold"><i class="fa-solid fa-triangle-exclamation me-1"></i> Alokasi pos melebihi pagu kantor!</small>
+                    @else
+                        <small class="opacity-50">Dana yang belum dibagi ke Pos Kegiatan</small>
+                    @endif
                 </div>
             </div>
         </div>
@@ -109,9 +133,14 @@
                                 <td class="text-muted small">{{ $stg->keterangan ?? '-' }}</td>
                                 <td class="text-end fw-bold">Rp {{ number_format($stg->nominal, 0, ',', '.') }}</td>
                                 <td class="text-center">
-                                    <a href="{{ route('budget.destroy', $stg->id) }}" class="btn btn-sm btn-outline-danger" onclick="return confirm('Hapus dana ini? Pagu kantor akan berkurang.')">
-                                        <i class="fa-solid fa-trash"></i>
-                                    </a>
+                                    @can('delete', $stg)
+                                    <form action="{{ route('budget.destroy', $stg) }}" method="POST" onsubmit="return confirm('Hapus dana ini? Pagu kantor akan berkurang.')">
+                                        @csrf @method('DELETE')
+                                        <button class="btn btn-sm btn-outline-danger">
+                                            <i class="fa-solid fa-trash"></i>
+                                        </button>
+                                    </form>
+                                    @endcan
                                 </td>
                             </tr>
                             @empty
@@ -130,9 +159,11 @@
                 <h5 class="fw-bold mb-1">Daftar Pos Kegiatan</h5>
                 <p class="text-muted small mb-0">Rincian pembagian anggaran per kegiatan.</p>
             </div>
+            @can('create', App\Models\Category::class)
             <button class="btn btn-primary btn-action" data-bs-toggle="modal" data-bs-target="#createModal">
                 <i class="fa-solid fa-plus me-2"></i> Buat Pos Baru
             </button>
+            @endcan
         </div>
 
         <div class="row">
@@ -171,17 +202,21 @@
                         </div>
 
                         <div class="d-flex justify-content-end gap-2">
+                            @can('update', $category)
                             <button class="btn btn-sm btn-outline-warning fw-bold px-3" 
                                 data-bs-toggle="modal" 
                                 data-bs-target="#editModal{{ $category->id }}">
                                 <i class="fa-solid fa-pen"></i> Edit
                             </button>
-                            <form action="{{ route('categories.destroy', $category->id) }}" method="POST" onsubmit="return confirm('Hapus Pos ini? Semua transaksi terkait akan hilang!')">
+                            @endcan
+                            @can('delete', $category)
+                            <form action="{{ route('categories.destroy', $category->id) }}" method="POST" onsubmit="return confirm('Hapus Pos ini?')">
                                 @csrf @method('DELETE')
                                 <button class="btn btn-sm btn-outline-danger fw-bold px-3">
                                     <i class="fa-solid fa-trash"></i> Hapus
                                 </button>
                             </form>
+                            @endcan
                         </div>
                     </div>
                 </div>
@@ -296,7 +331,7 @@
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz" crossorigin="anonymous"></script>
     <script>
         // SCRIPT FORMAT RUPIAH
         document.addEventListener('keyup', function(e) {

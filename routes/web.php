@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\TransactionController;
+use App\Http\Controllers\ActivityLogController;
 
 // --- 1. HALAMAN LOGIN (Tamu) ---
 Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
@@ -17,21 +18,26 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/', [CategoryController::class, 'index'])->name('dashboard');
 
     // === FITUR MONEV & ANGGARAN (CategoryController) ===
-    // 1. Kelola Pos Kegiatan (CRUD otomatis)
-    Route::resource('categories', CategoryController::class);
+    // 1. Kelola Pos Kegiatan (hanya method yang tersedia)
+    Route::resource('categories', CategoryController::class)
+        ->only(['index', 'store', 'update', 'destroy']);
     
     // 2. Simpan Dana GU (Tombol Kuning)
     Route::post('/simpan-dana', [CategoryController::class, 'storeBudget'])->name('budget.store');
 
-    // 3. Hapus Dana GU (Tombol Sampah) - INI YANG TADI ERROR
-    Route::get('/hapus-dana/{id}', [CategoryController::class, 'destroyBudget'])->name('budget.destroy');
+    // 3. Hapus Dana GU (Tombol Sampah)
+    Route::delete('/hapus-dana/{budgetStage}', [CategoryController::class, 'destroyBudget'])->name('budget.destroy');
 
 
     // === FITUR TRANSAKSI HARIAN (TransactionController) ===
     // 1. Cetak Laporan PDF
     Route::get('/transactions/cetak', [TransactionController::class, 'cetak'])->name('transactions.cetak');
     
-    // 2. Kelola Transaksi (CRUD otomatis)
-    Route::resource('transactions', TransactionController::class);
+    // 2. Kelola Transaksi (hanya method yang tersedia)
+    Route::resource('transactions', TransactionController::class)
+        ->only(['index', 'store', 'update', 'destroy']);
+
+    // 3. Riwayat Aktivitas (audit trail)
+    Route::get('/activity-logs', [ActivityLogController::class, 'index'])->name('activity-logs.index');
 
 });

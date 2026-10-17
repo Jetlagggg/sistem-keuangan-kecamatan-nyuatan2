@@ -12,7 +12,7 @@ return new class extends Migration
    public function up()
 {
     Schema::table('transactions', function (Blueprint $table) {
-        // Kita bikin nullable (boleh kosong) dulu biar data lama aman
+        // Nullable agar data transaksi lama tetap aman
         $table->foreignId('budget_stage_id')
               ->nullable()
               ->constrained('budget_stages')

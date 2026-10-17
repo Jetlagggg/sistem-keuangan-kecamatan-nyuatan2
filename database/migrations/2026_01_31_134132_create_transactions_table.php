@@ -15,7 +15,7 @@ return new class extends Migration
         $table->id();
         $table->date('tanggal');
         $table->enum('jenis', ['masuk', 'keluar']);
-        $table->bigInteger('nominal'); // Pakai BigInt biar muat angka miliaran
+        $table->bigInteger('nominal'); // BigInt untuk nominal hingga miliaran
         $table->text('keterangan')->nullable(); // Boleh dikosongin
         // Ini kuncinya: Menyambungkan ke tabel kategori
         $table->foreignId('category_id')->constrained('categories')->onDelete('cascade');

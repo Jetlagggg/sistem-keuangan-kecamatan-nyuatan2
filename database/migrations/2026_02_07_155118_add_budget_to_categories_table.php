@@ -9,7 +9,7 @@ return new class extends Migration
     public function up()
 {
     Schema::table('categories', function (Blueprint $table) {
-        // Kita tambah kolom budget, default 0 biar data lama gak error
+        // Tambah kolom budget (default 0 agar data lama tetap valid)
         $table->decimal('budget', 15, 2)->default(0)->after('nama');
     });
 }

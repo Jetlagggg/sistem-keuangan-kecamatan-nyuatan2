@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Keuangan - KECAMATAN NYUATAN</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha384-iw3OoTErCYJJB9mCa8LNS2hbsQ7M3C0EpIsO/H5+EGAkPGc6rk+V8i04oW/K5xq0" crossorigin="anonymous">
     <style>
         body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
         .navbar-camat { background: linear-gradient(to right, #1e3a8a, #1e40af); box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
@@ -28,9 +28,14 @@
                 </div>
             </a>
             <div class="ms-auto d-flex align-items-center">
+                @can('create', App\Models\BudgetStage::class)
                 <button class="btn btn-warning btn-sm me-2 fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#modalInputGU">
                     <i class="fa-solid fa-money-bill-wave me-1"></i> Input Dana (GU)
                 </button>
+                @endcan
+                <a href="{{ route('activity-logs.index') }}" class="btn btn-outline-light btn-sm me-2">
+                    <i class="fa-solid fa-clock-rotate-left me-1"></i> Riwayat
+                </a>
                 <a href="{{ route('categories.index') }}" class="btn btn-outline-light btn-sm me-3">
                     <i class="fa-solid fa-tags me-1"></i> Atur Anggaran
                 </a>
@@ -43,8 +48,17 @@
 
     <div class="container">
         @if(session('success')) <div class="alert alert-success border-0 shadow-sm mb-4"><i class="fa-solid fa-check-circle me-2"></i> {{ session('success') }}</div> @endif
+        @if(session('error')) <div class="alert alert-danger border-0 shadow-sm mb-4"><i class="fa-solid fa-triangle-exclamation me-2"></i> {{ session('error') }}</div> @endif
+        @if($errors->any())
+        <div class="alert alert-danger border-0 shadow-sm mb-4">
+            <ul class="mb-0 ps-3">
+                @foreach($errors->all() as $e) <li>{{ $e }}</li> @endforeach
+            </ul>
+        </div>
+        @endif
 
         <div class="row">
+            @can('create', App\Models\Transaction::class)
             <div class="col-md-4 mb-4">
                 <div class="card h-100 border-0 shadow-sm">
                     <div class="card-header-camat"><i class="fa-solid fa-pen-to-square me-2"></i> Input Transaksi Baru</div>
@@ -92,6 +106,7 @@
                 </div>
             </div>
 
+            @endcan
             <div class="col-md-8 mb-4">
                 <div class="row mb-3">
                     <div class="col-md-4"><div class="card bg-success text-white p-3 text-center shadow-sm"><small>Total Pagu</small><h6 class="fw-bold">Rp {{ number_format($paguGlobal, 0, ',', '.') }}</h6></div></div>
@@ -152,10 +167,12 @@
                                         </td>
                                         <td class="text-end text-danger fw-bold">- Rp {{ number_format($t->nominal, 0, ',', '.') }}</td>
                                         <td class="text-center">
+                                            @can('delete', $t)
                                             <form action="{{ route('transactions.destroy', $t->id) }}" method="POST" onsubmit="return confirm('Hapus?')">
                                                 @csrf @method('DELETE')
                                                 <button class="btn btn-sm btn-light text-danger"><i class="fa-solid fa-trash-can"></i></button>
                                             </form>
+                                            @endcan
                                         </td>
                                     </tr>
                                     @empty
@@ -165,6 +182,10 @@
                             </table>
                         </div>
                     </div>
+                </div>
+
+                <div class="mt-3">
+                    {{ $transactions->links() }}
                 </div>
             </div>
         </div>
@@ -188,7 +209,7 @@
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz" crossorigin="anonymous"></script>
     <script>
         const pilihKategori = document.getElementById('pilihKategori');
         const inputNominal = document.getElementById('inputNominal');

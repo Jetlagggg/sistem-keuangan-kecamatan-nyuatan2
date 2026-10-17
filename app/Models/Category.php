@@ -4,17 +4,23 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Category extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
 
-    // INI KUNCI PENTINGNYA!
-    // Kita harus daftarkan 'budget' disini biar bisa disave
     protected $fillable = [
-        'nama', 
+        'nama',
         'budget'
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'budget' => 'decimal:2',
+        ];
+    }
 
     public function transactions()
     {
