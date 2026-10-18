@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\ActivityLog;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Rules\Password;
 
 class ProfileController extends Controller
 {
@@ -21,7 +22,7 @@ class ProfileController extends Controller
             'name' => 'required|string|max:255',
             'email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')->ignore($user->id)],
             'current_password' => 'required_with:password|current_password',
-            'password' => 'nullable|string|min:8|confirmed',
+            'password' => ['nullable', 'string', Password::min(8)->letters()->numbers(), 'confirmed'],
         ]);
 
         $user->name = $data['name'];

@@ -6,6 +6,7 @@ use App\Models\ActivityLog;
 use App\Models\BudgetStage;
 use App\Models\Category;
 use App\Models\Transaction;
+use App\Support\DashboardCache;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
@@ -15,44 +16,21 @@ class CategoryController extends Controller
     // --- 1. HALAMAN UTAMA MONEV ---
     public function index()
     {
-        // A. REALISASI PER POS (1 query agregat, hindari N+1)
-        $categories = Category::withSum(['transactions as terpakai_saat_ini' => function ($q) {
-            $q->where('jenis', 'keluar')->where('status', Transaction::STATUS_DISETUJUI);
-        }], 'nominal')->get();
+        $categories = DashboardCache::pos();
+        $stats = DashboardCache::stats();
+        $tren = DashboardCache::tren();
+        $stages = DashboardCache::stages();
 
-        foreach ($categories as $cat) {
-            $cat->terpakai_saat_ini = $cat->terpakai_saat_ini ?? 0;
-            $cat->sisa_saat_ini = $cat->budget - $cat->terpakai_saat_ini;
-            $cat->persen_realisasi = $cat->budget > 0 ? ($cat->terpakai_saat_ini / $cat->budget) * 100 : 0;
-        }
+        $totalPagu = $stats['pagu'];
+        $totalTerserap = $stats['terserap'];
+        $persen = $stats['persen'];
+        $sisaAlokasi = $stats['sisa_alokasi'];
+        $totalPending = $stats['pending'];
+        $jumlahPending = $stats['pending_count'];
 
-        // B. DATA GLOBAL
-        $totalPagu = BudgetStage::sum('nominal');
-        $totalTerserap = Transaction::where('jenis', 'keluar')->approved()->sum('nominal');
-        $persen = $totalPagu > 0 ? ($totalTerserap / $totalPagu) * 100 : 0;
-
-        // B2. MENUNGGU VERIFIKASI
-        $totalPending = Transaction::where('jenis', 'keluar')->where('status', Transaction::STATUS_DRAFT)->sum('nominal');
-        $jumlahPending = Transaction::where('status', Transaction::STATUS_DRAFT)->count();
-
-        // C. SISA ALOKASI
-        $totalBudgetPos = Category::sum('budget');
-        $sisaAlokasi = $totalPagu - $totalBudgetPos;
-
-        // D. RIWAYAT GU
-        $stages = BudgetStage::orderBy('tanggal_cair', 'desc')->get();
-
-        // E. TREN REALISASI BULANAN (tahun berjalan)
-        $tahun = (int) now()->year;
-        $perBulan = Transaction::where('jenis', 'keluar')
-            ->whereYear('tanggal', $tahun)
-            ->get(['tanggal', 'nominal'])
-            ->groupBy(fn ($t) => (int) $t->tanggal->month)
-            ->map(fn ($rows) => (int) $rows->sum('nominal'));
-
-        $trenLabels = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
-        $trenData = collect(range(1, 12))->map(fn ($m) => $perBulan[$m] ?? 0);
-        $trenTahun = $tahun;
+        $trenLabels = $tren['labels'];
+        $trenData = $tren['data'];
+        $trenTahun = $tren['tahun'];
 
         return view('categories.index', compact(
             'categories',

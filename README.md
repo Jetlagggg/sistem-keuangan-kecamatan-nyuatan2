@@ -50,7 +50,9 @@ php artisan serve
 
 ## Keamanan
 
-- Rate limit login 5 percobaan / menit per email + IP.
+- Rate limit login 5 percobaan / menit per email + IP, plus penguncian akun sementara
+  (default 5 kali gagal → terkunci 15 menit; atur via `LOGIN_MAX_ATTEMPTS` & `LOGIN_LOCKOUT_MINUTES`).
+- Kata sandi wajib minimal 8 karakter, mengandung huruf dan angka.
 - Otorisasi berbasis Policy untuk setiap aksi create/update/delete.
 - Validasi input ketat (`exists`, batas nominal, format angka).
 - Pengeluaran tidak boleh melebihi sisa pagu pos maupun sisa dana tahap.
@@ -59,12 +61,15 @@ php artisan serve
 - Security header (CSP, X-Frame-Options, nosniff, Referrer-Policy) via middleware.
 - HTTPS dipaksa otomatis saat `APP_ENV=production`.
 
-## Pengujian
+## Pengujian & Kualitas Kode
 
 ```bash
-php artisan test
-php vendor/bin/pint --test
+php artisan test                    # uji fungsional (SQLite in-memory)
+php vendor/bin/pint --test          # cek gaya kode (Laravel Pint)
+php vendor/bin/phpstan analyse      # analisis statis (Larastan, level 5)
 ```
+
+Ketiganya dijalankan otomatis di CI (`.github/workflows/tests.yml`).
 
 ## Deployment Produksi
 
@@ -122,8 +127,15 @@ php artisan db:seed --class=DemoSeeder
 - `resources/views/layouts/app.blade.php` — layout bersama (head, navbar, alert, formatter rupiah).
 - `resources/views/partials` — alert & modal input dana bersama.
 - `config/laporan.php` — kop instansi & data bendahara untuk laporan PDF.
-- `config/keuangan.php` — lokasi & retensi pencadangan.
+- `config/keuangan.php` — lokasi & retensi pencadangan serta parameter keamanan (penguncian login).
+- `app/Support/DashboardCache.php` — cache agregat dashboard (pagu, serapan, tren, sisa alokasi) untuk mempercepat halaman Monev/Transaksi.
 - `database/seeders/DemoSeeder.php` — data contoh untuk demo.
+
+## Panduan Skill Agen
+
+Untuk tugas desain/penyempurnaan antarmuka (UI/UX, tipografi, hierarki, responsif, audit tampilan),
+gunakan skill `impeccable` (tersedia di `.opencode/skills/impeccable/`, perlu sesi opencode baru
+setelah instalasi). Untuk tugas lain, ikuti konvensi di `AGENTS.md`.
 
 ## Lisensi
 

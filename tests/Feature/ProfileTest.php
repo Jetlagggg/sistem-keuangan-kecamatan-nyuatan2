@@ -47,11 +47,11 @@ class ProfileTest extends TestCase
             'name' => $user->name,
             'email' => $user->email,
             'current_password' => 'password',
-            'password' => 'sandi-baru-aman',
-            'password_confirmation' => 'sandi-baru-aman',
+            'password' => 'sandi-baru-aman1',
+            'password_confirmation' => 'sandi-baru-aman1',
         ])->assertRedirect(route('profile.edit'));
 
-        $this->assertTrue(Hash::check('sandi-baru-aman', $user->fresh()->password));
+        $this->assertTrue(Hash::check('sandi-baru-aman1', $user->fresh()->password));
     }
 
     public function test_password_change_requires_correct_current_password(): void
@@ -62,8 +62,8 @@ class ProfileTest extends TestCase
             'name' => $user->name,
             'email' => $user->email,
             'current_password' => 'salah-sekali',
-            'password' => 'sandi-baru-aman',
-            'password_confirmation' => 'sandi-baru-aman',
+            'password' => 'sandi-baru-aman1',
+            'password_confirmation' => 'sandi-baru-aman1',
         ])->assertSessionHasErrors('current_password');
 
         $this->assertTrue(Hash::check('password', $user->fresh()->password));
@@ -77,7 +77,7 @@ class ProfileTest extends TestCase
             'name' => $user->name,
             'email' => $user->email,
             'current_password' => 'password',
-            'password' => 'sandi-baru-aman',
+            'password' => 'sandi-baru-aman1',
             'password_confirmation' => 'beda-dong',
         ])->assertSessionHasErrors('password');
     }

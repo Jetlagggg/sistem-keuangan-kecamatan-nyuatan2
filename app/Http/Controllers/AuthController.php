@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\ActivityLog;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\RateLimiter;
@@ -29,9 +30,24 @@ class AuthController extends Controller
         // Batasi percobaan login (anti brute-force)
         $this->ensureIsNotRateLimited($request);
 
+        $user = User::where('email', $request->email)->first();
+
+        if ($user && $user->isLocked()) {
+            $minutes = (int) ceil(now()->diffInSeconds($user->locked_until, false) / 60);
+
+            throw ValidationException::withMessages([
+                'email' => 'Akun terkunci sementara. Silakan coba lagi dalam '.max($minutes, 1).' menit.',
+            ]);
+        }
+
         // Cek kecocokan data
         if (Auth::attempt(['email' => $request->email, 'password' => $request->password])) {
             RateLimiter::clear($this->throttleKey($request));
+
+            if ($user) {
+                $user->forceFill(['failed_login_attempts' => 0, 'locked_until' => null])->save();
+            }
+
             $request->session()->regenerate();
 
             ActivityLog::record('login', 'users', Auth::id(), 'Login berhasil');
@@ -42,8 +58,42 @@ class AuthController extends Controller
         // Catat percobaan gagal
         RateLimiter::hit($this->throttleKey($request), 60);
 
+        if ($user && $this->registerFailedAttempt($user)) {
+            $minutes = $this->lockoutMinutes();
+
+            return back()->with('error', 'Terlalu banyak percobaan gagal. Akun dikunci sementara selama '.$minutes.' menit.');
+        }
+
         // Kalau gagal
         return back()->with('error', 'Email atau Password salah!');
+    }
+
+    // Tambah hitungan gagal; kunci akun bila melewati batas. True bila baru dikunci.
+    protected function registerFailedAttempt(User $user): bool
+    {
+        $user->failed_login_attempts = $user->failed_login_attempts + 1;
+
+        if ($user->failed_login_attempts >= $this->maxAttempts()) {
+            $user->locked_until = now()->addMinutes($this->lockoutMinutes());
+            $user->failed_login_attempts = 0;
+            $user->save();
+
+            return true;
+        }
+
+        $user->save();
+
+        return false;
+    }
+
+    protected function maxAttempts(): int
+    {
+        return max((int) config('keuangan.security.max_login_attempts', 5), 1);
+    }
+
+    protected function lockoutMinutes(): int
+    {
+        return max((int) config('keuangan.security.lockout_minutes', 15), 1);
     }
 
     // 3. Proses Logout

@@ -78,7 +78,7 @@ class TrashController extends Controller
         $category = Category::onlyTrashed()->findOrFail($id);
         $this->authorize('forceDelete', $category);
 
-        if ($category->transactions()->withTrashed()->exists()) {
+        if (Transaction::withTrashed()->where('category_id', $category->id)->exists()) {
             return back()->with('error', 'Pos masih memiliki transaksi (termasuk yang diarsipkan). Pulihkan dan hapus transaksinya dahulu.');
         }
 
@@ -94,7 +94,7 @@ class TrashController extends Controller
         $stage = BudgetStage::onlyTrashed()->findOrFail($id);
         $this->authorize('forceDelete', $stage);
 
-        if ($stage->transactions()->withTrashed()->exists()) {
+        if (Transaction::withTrashed()->where('budget_stage_id', $stage->id)->exists()) {
             return back()->with('error', 'Dana masih dipakai transaksi (termasuk yang diarsipkan). Pulihkan dan hapus transaksinya dahulu.');
         }
 

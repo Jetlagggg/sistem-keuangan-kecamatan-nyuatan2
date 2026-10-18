@@ -2,11 +2,19 @@
 
 namespace App\Models;
 
+use App\Support\DashboardCache;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+/**
+ * @property \Illuminate\Support\Carbon $tanggal
+ * @property int $nominal
+ * @property string $status
+ * @property \Illuminate\Support\Carbon|null $verified_at
+ */
 class Transaction extends Model
 {
     use HasFactory, SoftDeletes;
@@ -16,6 +24,14 @@ class Transaction extends Model
     public const STATUS_DISETUJUI = 'disetujui';
 
     public const STATUS_DITOLAK = 'ditolak';
+
+    protected static function booted(): void
+    {
+        static::saved(fn () => DashboardCache::flush());
+        static::deleted(fn () => DashboardCache::flush());
+        static::restored(fn () => DashboardCache::flush());
+        static::forceDeleted(fn () => DashboardCache::flush());
+    }
 
     protected $fillable = [
         'tanggal',
@@ -39,17 +55,17 @@ class Transaction extends Model
         ];
     }
 
-    public function category()
+    public function category(): BelongsTo
     {
         return $this->belongsTo(Category::class);
     }
 
-    public function budgetStage()
+    public function budgetStage(): BelongsTo
     {
         return $this->belongsTo(BudgetStage::class, 'budget_stage_id');
     }
 
-    public function verifier()
+    public function verifier(): BelongsTo
     {
         return $this->belongsTo(User::class, 'verified_by');
     }

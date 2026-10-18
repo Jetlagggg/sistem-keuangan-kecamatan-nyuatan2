@@ -7,6 +7,11 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
+/**
+ * @property string $role
+ * @property int $failed_login_attempts
+ * @property \Illuminate\Support\Carbon|null $locked_until
+ */
 class User extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
@@ -28,6 +33,8 @@ class User extends Authenticatable
         'email',
         'password',
         'role',
+        'failed_login_attempts',
+        'locked_until',
     ];
 
     /**
@@ -50,6 +57,7 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'locked_until' => 'datetime',
         ];
     }
 
@@ -61,5 +69,10 @@ class User extends Authenticatable
     public function canManage(): bool
     {
         return in_array($this->role, [self::ROLE_ADMIN, self::ROLE_BENDAHARA], true);
+    }
+
+    public function isLocked(): bool
+    {
+        return $this->locked_until !== null && now()->lt($this->locked_until);
     }
 }

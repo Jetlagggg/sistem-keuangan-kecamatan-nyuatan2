@@ -33,6 +33,9 @@ composer test
 php vendor/bin/pint          # perbaiki otomatis
 php vendor/bin/pint --test   # cek tanpa mengubah (dipakai CI)
 
+# Analisis statis (Larastan, level 5)
+php vendor/bin/phpstan analyse   # atau: composer analyse
+
 # Cadangan database (SQLite: salin berkas, MySQL: mysqldump) + retensi otomatis
 php artisan keuangan:backup --keep=14
 
@@ -73,11 +76,16 @@ Pengujian memakai SQLite in-memory (`phpunit.xml`), jadi tidak perlu database un
   database ke `storage/app/backups` (konfigurasi `config/keuangan.php`); dijadwalkan harian
   di `routes/console.php`.
 - **Keamanan**: middleware `App\Http\Middleware\SecurityHeaders` menambahkan CSP & header
-  keamanan ke semua respons; login dibatasi rate limit. HTTPS dipaksa saat `APP_ENV=production`.
+  keamanan ke semua respons; login dibatasi rate limit dan dikunci sementara setelah
+  beberapa kali gagal (`users.locked_until`, parameter di `config/keuangan.php`); kata sandi
+  wajib minimal 8 karakter berisi huruf & angka. HTTPS dipaksa saat `APP_ENV=production`.
+- **Cache dashboard**: `app/Support/DashboardCache.php` (TTL 2 menit) menyimpan agregat pagu,
+  serapan, sisa alokasi, tren, dan daftar pos; otomatis dibersihkan oleh hook `booted()`
+  pada model `Transaction`, `Category`, dan `BudgetStage`.
 - Migrasi baru diberi prefix tanggal; hindari mengubah migrasi yang sudah dijalankan di produksi
   selain perbaikan format.
 
 ## CI
 
-`.github/workflows/tests.yml` menjalankan `./vendor/bin/pint --test` dan `php artisan test`
-pada setiap push/PR.
+`.github/workflows/tests.yml` menjalankan `./vendor/bin/pint --test`,
+`./vendor/bin/phpstan analyse`, dan `php artisan test` pada setiap push/PR.

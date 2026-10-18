@@ -8,19 +8,33 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha384-iw3OoTErCYJJB9mCa8LNS2hbsQ7M3C0EpIsO/H5+EGAkPGc6rk+V8i04oW/K5xq0" crossorigin="anonymous">
     <style>
-        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
-        .navbar-camat { background: linear-gradient(to right, #1e3a8a, #1e40af); box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
-        .card-header-camat { background-color: #fff; border-bottom: 2px solid #e5e7eb; color: #1e3a8a; font-weight: 700; padding: 15px 20px; }
-        .btn-simpan { background-color: #d97706; color: white; font-weight: 600; }
+        :root { --brand-900: #1e3a8a; --brand-700: #1e40af; --accent: #d97706; }
+        html { scroll-behavior: smooth; }
+        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+        h1, h2, h3, h4, h5 { letter-spacing: -.01em; }
+        .navbar-camat { position: sticky; top: 0; z-index: 1030; background: linear-gradient(to right, var(--brand-900), var(--brand-700)); box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
+        .navbar-camat .navbar-brand span { line-height: 1.15; }
+        .navbar-camat .btn-outline-light.active { background-color: #fff; color: var(--brand-900); font-weight: 600; }
+        .card-header-camat { background-color: #fff; border-bottom: 2px solid #e5e7eb; color: var(--brand-900); font-weight: 700; padding: 15px 20px; }
+        .btn-simpan { background-color: var(--accent); color: white; font-weight: 600; }
         .text-masuk { color: #059669; font-weight: bold; background-color: #ecfdf5; padding: 2px 8px; border-radius: 4px; }
         .text-keluar { color: #dc2626; font-weight: bold; background-color: #fef2f2; padding: 2px 8px; border-radius: 4px; }
+        .card { border-radius: 14px; }
         .card-summary { border: none; border-radius: 12px; transition: transform .2s; box-shadow: 0 4px 6px -1px rgba(0,0,0,.1); }
         .card-summary:hover { transform: translateY(-5px); }
         .card-pagu { background: linear-gradient(135deg, #1e293b, #0f172a); color: #fff; }
         .card-serap { background: linear-gradient(135deg, #334155, #1e293b); color: #fff; }
         .card-sisa { background: linear-gradient(135deg, #475569, #334155); color: #fff; }
         .table-gu thead { background-color: #e2e8f0; }
+        .table > :not(caption) > * > * { padding: .6rem .75rem; }
         .footer { width: 100%; text-align: right; margin-top: 30px; padding-right: 40px; }
+        .btn:focus-visible, .navbar-toggler:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible { outline: 3px solid rgba(217, 119, 6, .55); outline-offset: 2px; }
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+        .container > .card, .container > .row { animation: fadeUp .25s ease both; }
+        @media (prefers-reduced-motion: reduce) {
+            html { scroll-behavior: auto; }
+            *, *::before, *::after { animation: none !important; transition: none !important; }
+        }
     </style>
     @stack('styles')
 </head>
@@ -29,7 +43,7 @@
     <nav class="navbar navbar-expand-lg navbar-dark navbar-camat mb-4 pt-3 pb-3">
         <div class="container">
             <a class="navbar-brand d-flex align-items-center" href="{{ route('transactions.index') }}">
-                <i class="fa-solid fa-landmark me-3 fs-4 text-warning"></i>
+                <i class="fa-solid fa-landmark me-3 fs-4 text-warning flex-shrink-0"></i>
                 <div>
                     <span class="d-block fw-bold">KANTOR KECAMATAN NYUATAN</span>
                     <span style="font-size: 12px; opacity: 0.8;">Sistem Informasi Keuangan Digital</span>

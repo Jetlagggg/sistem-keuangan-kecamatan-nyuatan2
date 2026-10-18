@@ -6,6 +6,7 @@ use App\Models\ActivityLog;
 use App\Models\BudgetStage;
 use App\Models\Category;
 use App\Models\Transaction;
+use App\Support\DashboardCache;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -20,14 +21,16 @@ class TransactionController extends Controller
             ->paginate(25)
             ->withQueryString();
 
-        $paguGlobal = BudgetStage::sum('nominal');
-        $totalKeluar = Transaction::where('jenis', 'keluar')->approved()->sum('nominal');
+        $stats = DashboardCache::stats();
+
+        $paguGlobal = $stats['pagu'];
+        $totalKeluar = $stats['terserap'];
         $saldoAkhir = $paguGlobal - $totalKeluar;
 
-        $totalPending = Transaction::where('jenis', 'keluar')->where('status', Transaction::STATUS_DRAFT)->sum('nominal');
-        $jumlahPending = Transaction::where('status', Transaction::STATUS_DRAFT)->count();
+        $totalPending = $stats['pending'];
+        $jumlahPending = $stats['pending_count'];
 
-        $categories = $this->categoriesWithUsage();
+        $categories = DashboardCache::pos(approvedOnly: false);
         $stages = BudgetStage::orderBy('id', 'desc')->get();
 
         return view('transactions.index', compact(
@@ -247,16 +250,6 @@ class TransactionController extends Controller
         }
 
         return $query;
-    }
-
-    private function categoriesWithUsage()
-    {
-        return Category::withSum(['transactions as terpakai_saat_ini' => function ($q) {
-            $q->where('jenis', 'keluar');
-        }], 'nominal')->get()->each(function ($cat) {
-            $cat->terpakai_saat_ini = $cat->terpakai_saat_ini ?? 0;
-            $cat->sisa_saat_ini = $cat->budget - $cat->terpakai_saat_ini;
-        });
     }
 
     private function parseNominal(string $value): int
