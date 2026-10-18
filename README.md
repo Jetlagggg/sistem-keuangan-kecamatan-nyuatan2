@@ -12,8 +12,9 @@ Aplikasi web monitoring & evaluasi (Monev) anggaran serta pencatatan transaksi k
 - **Verifikasi Transaksi** — input bendahara berstatus *draft* menunggu persetujuan admin; hanya transaksi *disetujui* yang dihitung sebagai realisasi.
 - **Cetak Laporan PDF** (dompdf) dengan filter periode, kata kunci, dan sumber dana.
 - **Ekspor Excel/CSV** — unduh laporan transaksi sesuai filter aktif.
+- **Laporan Anggaran per Pos** (PDF/CSV) — rekapitulasi pagu, realisasi, dan sisa tiap pos.
 - **Grafik Tren Realisasi** bulanan pada halaman Monev.
-- **Riwayat Aktivitas** (audit trail) — mencatat login, logout, dan perubahan data beserta IP.
+- **Riwayat Aktivitas** (audit trail) — mencatat login, logout, dan perubahan data beserta IP, dengan filter pengguna/aksi/tabel/tanggal.
 - **Manajemen Pengguna** (admin) — tambah/ubah/hapus akun, atur role, dan reset kata sandi.
 - **Arsip Data** (admin) — data yang dihapus dapat dipulihkan atau dihapus permanen.
 - **Profil Saya** — setiap pengguna dapat mengubah nama, email, dan kata sandinya sendiri.
@@ -78,26 +79,51 @@ php vendor/bin/pint --test
 
 ## Backup
 
-Data keuangan wajib di-backup berkala. Contoh (MySQL/MariaDB):
+Data keuangan wajib di-backup berkala.
 
 ```bash
-mysqldump -u USER -p NAMA_DB > backup-$(date +%F).sql
-# pemulihan
+# Cadangan otomatis (SQLite: salin berkas; MySQL: mysqldump)
+php artisan keuangan:backup
+# retensi kustom (hari)
+php artisan keuangan:backup --keep=30
+```
+
+Cadangan disimpan di `storage/app/backups` (ubah via `BACKUP_PATH`, retensi default
+`BACKUP_KEEP_DAYS=14`). Jadwal harian pukul 01:00 sudah terdaftar; aktifkan di server dengan:
+
+```bash
+php artisan schedule:work            # cek manual saat pengembangan
+* * * * * cd /path-proyek && php artisan schedule:run >> /dev/null 2>&1   # cron produksi
+```
+
+Untuk pemulihan manual (MySQL/MariaDB):
+
+```bash
 mysql -u USER -p NAMA_DB < backup-2026-01-01.sql
 ```
 
-Untuk SQLite cukup salin berkas `database/database.sqlite`. Simpan salinan di luar
-server dan uji proses pemulihan secara berkala.
+Simpan salinan di luar server dan uji proses pemulihan secara berkala.
+
+## Data Contoh
+
+Untuk mengisi dashboard, grafik, dan laporan dengan data demo (di luar produksi):
+
+```bash
+php artisan db:seed --class=DemoSeeder
+```
 
 ## Struktur Singkat
 
 - `app/Http/Controllers` — Auth, Category (Monev & Dana), Transaction, ActivityLog, User, Trash, Profile.
+- `app/Console/Commands/BackupDatabase.php` — perintah `keuangan:backup`.
 - `app/Policies` — otorisasi role.
 - `app/Models` — User, Category, BudgetStage, Transaction, ActivityLog.
 - `app/Http/Middleware/SecurityHeaders.php` — header keamanan.
 - `resources/views/layouts/app.blade.php` — layout bersama (head, navbar, alert, formatter rupiah).
 - `resources/views/partials` — alert & modal input dana bersama.
 - `config/laporan.php` — kop instansi & data bendahara untuk laporan PDF.
+- `config/keuangan.php` — lokasi & retensi pencadangan.
+- `database/seeders/DemoSeeder.php` — data contoh untuk demo.
 
 ## Lisensi
 

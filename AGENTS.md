@@ -32,6 +32,12 @@ composer test
 # Lint / format kode PHP (Laravel Pint, preset "laravel")
 php vendor/bin/pint          # perbaiki otomatis
 php vendor/bin/pint --test   # cek tanpa mengubah (dipakai CI)
+
+# Cadangan database (SQLite: salin berkas, MySQL: mysqldump) + retensi otomatis
+php artisan keuangan:backup --keep=14
+
+# Data contoh (di luar produksi)
+php artisan db:seed --class=DemoSeeder
 ```
 
 Pengujian memakai SQLite in-memory (`phpunit.xml`), jadi tidak perlu database untuk `php artisan test`.
@@ -63,6 +69,9 @@ Pengujian memakai SQLite in-memory (`phpunit.xml`), jadi tidak perlu database un
   PDF/CSV; `guardBudget` tetap menghitung semua status agar pagu tidak terlampaui oleh draft.
 - **Bahasa**: locale `id` (`lang/id`), pesan validasi/auth/paginasi berbahasa Indonesia.
 - **Audit trail**: setiap perubahan memanggil `ActivityLog::record(...)`.
+- **Pencadangan**: `app/Console/Commands/BackupDatabase.php` (`keuangan:backup`) menyalin
+  database ke `storage/app/backups` (konfigurasi `config/keuangan.php`); dijadwalkan harian
+  di `routes/console.php`.
 - **Keamanan**: middleware `App\Http\Middleware\SecurityHeaders` menambahkan CSP & header
   keamanan ke semua respons; login dibatasi rate limit. HTTPS dipaksa saat `APP_ENV=production`.
 - Migrasi baru diberi prefix tanggal; hindari mengubah migrasi yang sudah dijalankan di produksi

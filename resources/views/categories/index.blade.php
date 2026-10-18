@@ -11,11 +11,19 @@
                 <small class="text-muted">Monitoring &amp; Evaluasi Keuangan Kecamatan</small>
             </div>
         </div>
-        @can('create', App\Models\Category::class)
-        <button class="btn btn-primary fw-bold" data-bs-toggle="modal" data-bs-target="#createModal">
-            <i class="fa-solid fa-plus me-2"></i> Buat Pos Baru
-        </button>
-        @endcan
+        <div class="d-flex gap-2">
+            <a href="{{ route('categories.laporan') }}" target="_blank" class="btn btn-outline-secondary fw-bold">
+                <i class="fa-solid fa-file-pdf me-1"></i> Laporan Pos
+            </a>
+            <a href="{{ route('categories.laporan.csv') }}" class="btn btn-outline-success fw-bold">
+                <i class="fa-solid fa-file-excel me-1"></i> Excel
+            </a>
+            @can('create', App\Models\Category::class)
+            <button class="btn btn-primary fw-bold" data-bs-toggle="modal" data-bs-target="#createModal">
+                <i class="fa-solid fa-plus me-2"></i> Buat Pos Baru
+            </button>
+            @endcan
+        </div>
     </div>
 
     <div class="row mb-4">

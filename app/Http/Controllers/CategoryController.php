@@ -6,6 +6,7 @@ use App\Models\ActivityLog;
 use App\Models\BudgetStage;
 use App\Models\Category;
 use App\Models\Transaction;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 
@@ -66,6 +67,74 @@ class CategoryController extends Controller
             'totalPending',
             'jumlahPending'
         ));
+    }
+
+    // --- 1b. LAPORAN ANGGARAN PER POS (PDF) ---
+    public function laporan()
+    {
+        [$categories, $totalPagu, $totalBudgetPos, $totalRealisasi] = $this->dataLaporanPos();
+
+        $pdf = Pdf::loadView('categories.laporan', compact(
+            'categories',
+            'totalPagu',
+            'totalBudgetPos',
+            'totalRealisasi'
+        ));
+
+        $pdf->setPaper('a4', 'portrait');
+
+        return $pdf->stream('laporan-pos-anggran.pdf');
+    }
+
+    // --- 1c. LAPORAN ANGGARAN PER POS (CSV) ---
+    public function laporanCsv()
+    {
+        [$categories, $totalPagu, $totalBudgetPos, $totalRealisasi] = $this->dataLaporanPos();
+
+        $filename = 'laporan-pos-'.now()->format('Ymd-His').'.csv';
+
+        return response()->streamDownload(function () use ($categories, $totalPagu, $totalBudgetPos, $totalRealisasi) {
+            $out = fopen('php://output', 'w');
+            fwrite($out, "\xEF\xBB\xBF");
+
+            fputcsv($out, ['No', 'Pos Kegiatan', 'Pagu (Rp)', 'Realisasi (Rp)', 'Sisa (Rp)', '%'], ';');
+
+            foreach ($categories as $i => $c) {
+                fputcsv($out, [
+                    $i + 1,
+                    $c->nama,
+                    $c->budget,
+                    $c->terpakai_saat_ini,
+                    $c->sisa_saat_ini,
+                    number_format($c->persen_realisasi, 2, ',', '.'),
+                ], ';');
+            }
+
+            fputcsv($out, ['', 'TOTAL POS', $totalBudgetPos, $totalRealisasi, $totalBudgetPos - $totalRealisasi, ''], ';');
+            fputcsv($out, ['', 'TOTAL PAGU KANTOR', $totalPagu, '', '', ''], ';');
+
+            fclose($out);
+        }, $filename, ['Content-Type' => 'text/csv; charset=UTF-8']);
+    }
+
+    private function dataLaporanPos(): array
+    {
+        $categories = Category::withSum(['transactions as terpakai_saat_ini' => function ($q) {
+            $q->where('jenis', 'keluar')->where('status', Transaction::STATUS_DISETUJUI);
+        }], 'nominal')->orderBy('nama')->get();
+
+        foreach ($categories as $cat) {
+            $cat->terpakai_saat_ini = $cat->terpakai_saat_ini ?? 0;
+            $cat->sisa_saat_ini = $cat->budget - $cat->terpakai_saat_ini;
+            $cat->persen_realisasi = $cat->budget > 0 ? ($cat->terpakai_saat_ini / $cat->budget) * 100 : 0;
+        }
+
+        return [
+            $categories,
+            BudgetStage::sum('nominal'),
+            Category::sum('budget'),
+            $categories->sum('terpakai_saat_ini'),
+        ];
     }
 
     // --- 2. INPUT DANA GU ---

@@ -28,6 +28,10 @@ Route::middleware(['auth'])->group(function () {
     // 2. Simpan Dana GU (Tombol Kuning)
     Route::post('/simpan-dana', [CategoryController::class, 'storeBudget'])->name('budget.store');
 
+    // 2b. Laporan Anggaran per Pos
+    Route::get('/categories/laporan', [CategoryController::class, 'laporan'])->name('categories.laporan');
+    Route::get('/categories/laporan/csv', [CategoryController::class, 'laporanCsv'])->name('categories.laporan.csv');
+
     // 3. Hapus Dana GU (Tombol Sampah)
     Route::delete('/hapus-dana/{budgetStage}', [CategoryController::class, 'destroyBudget'])->name('budget.destroy');
 
