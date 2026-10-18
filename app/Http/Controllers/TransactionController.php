@@ -21,15 +21,19 @@ class TransactionController extends Controller
             ->withQueryString();
 
         $paguGlobal = BudgetStage::sum('nominal');
-        $totalKeluar = Transaction::where('jenis', 'keluar')->sum('nominal');
+        $totalKeluar = Transaction::where('jenis', 'keluar')->approved()->sum('nominal');
         $saldoAkhir = $paguGlobal - $totalKeluar;
+
+        $totalPending = Transaction::where('jenis', 'keluar')->where('status', Transaction::STATUS_DRAFT)->sum('nominal');
+        $jumlahPending = Transaction::where('status', Transaction::STATUS_DRAFT)->count();
 
         $categories = $this->categoriesWithUsage();
         $stages = BudgetStage::orderBy('id', 'desc')->get();
 
         return view('transactions.index', compact(
             'transactions', 'categories', 'stages',
-            'paguGlobal', 'totalKeluar', 'saldoAkhir'
+            'paguGlobal', 'totalKeluar', 'saldoAkhir',
+            'totalPending', 'jumlahPending'
         ));
     }
 
@@ -47,8 +51,9 @@ class TransactionController extends Controller
         ]);
 
         $nominal = $this->parseNominal($request->nominal);
+        $approved = $request->user()->isAdmin();
 
-        $transaction = DB::transaction(function () use ($request, $nominal) {
+        $transaction = DB::transaction(function () use ($request, $nominal, $approved) {
             $this->guardBudget($nominal, (int) $request->category_id, (int) $request->budget_stage_id);
 
             return Transaction::create([
@@ -59,13 +64,19 @@ class TransactionController extends Controller
                 'penerima' => $request->penerima,
                 'keterangan' => $request->keterangan,
                 'jenis' => 'keluar',
+                'status' => $approved ? Transaction::STATUS_DISETUJUI : Transaction::STATUS_DRAFT,
+                'verified_by' => $approved ? $request->user()->id : null,
+                'verified_at' => $approved ? now() : null,
             ]);
         });
 
         ActivityLog::record('create', 'transactions', $transaction->id, 'Menambahkan transaksi');
 
-        return redirect()->route('transactions.index')
-            ->with('success', 'Transaksi berhasil disimpan!');
+        $message = $approved
+            ? 'Transaksi berhasil disimpan!'
+            : 'Transaksi tersimpan dan menunggu verifikasi admin.';
+
+        return redirect()->route('transactions.index')->with('success', $message);
     }
 
     public function update(Request $request, Transaction $transaction)
@@ -114,9 +125,39 @@ class TransactionController extends Controller
             ->with('success', 'Transaksi dihapus!');
     }
 
+    public function verify(Request $request, Transaction $transaction)
+    {
+        $this->authorize('verify', $transaction);
+
+        $transaction->update([
+            'status' => Transaction::STATUS_DISETUJUI,
+            'verified_by' => $request->user()->id,
+            'verified_at' => now(),
+        ]);
+
+        ActivityLog::record('update', 'transactions', $transaction->id, 'Menyetujui transaksi');
+
+        return back()->with('success', 'Transaksi disetujui.');
+    }
+
+    public function reject(Request $request, Transaction $transaction)
+    {
+        $this->authorize('verify', $transaction);
+
+        $transaction->update([
+            'status' => Transaction::STATUS_DITOLAK,
+            'verified_by' => $request->user()->id,
+            'verified_at' => now(),
+        ]);
+
+        ActivityLog::record('update', 'transactions', $transaction->id, 'Menolak transaksi');
+
+        return back()->with('success', 'Transaksi ditolak.');
+    }
+
     public function cetak(Request $request)
     {
-        $transactions = $this->filteredQuery($request)->oldest()->get();
+        $transactions = $this->filteredQuery($request, approvedOnly: true)->oldest()->get();
 
         $totalKeluar = $transactions->where('jenis', 'keluar')->sum('nominal');
 
@@ -144,9 +185,46 @@ class TransactionController extends Controller
         return $pdf->stream('laporan-transaksi.pdf');
     }
 
-    private function filteredQuery(Request $request)
+    public function export(Request $request)
+    {
+        $transactions = $this->filteredQuery($request, approvedOnly: true)->oldest()->get();
+
+        $filename = 'laporan-transaksi-'.now()->format('Ymd-His').'.csv';
+
+        return response()->streamDownload(function () use ($transactions) {
+            $out = fopen('php://output', 'w');
+
+            fwrite($out, "\xEF\xBB\xBF");
+
+            fputcsv($out, ['No', 'Tanggal', 'Sumber Dana', 'Pos Kegiatan', 'Uraian', 'Penerima', 'Nominal (Rp)'], ';');
+
+            foreach ($transactions as $i => $t) {
+                fputcsv($out, [
+                    $i + 1,
+                    $t->tanggal?->format('d/m/Y'),
+                    $t->budgetStage->nama_tahap ?? 'Non-GU',
+                    $t->category->nama ?? 'Umum',
+                    $t->keterangan,
+                    $t->penerima,
+                    $t->nominal,
+                ], ';');
+            }
+
+            fputcsv($out, ['', '', '', '', '', 'TOTAL', $transactions->where('jenis', 'keluar')->sum('nominal')], ';');
+
+            fclose($out);
+        }, $filename, ['Content-Type' => 'text/csv; charset=UTF-8']);
+    }
+
+    private function filteredQuery(Request $request, bool $approvedOnly = false)
     {
         $query = Transaction::query()->with(['category', 'budgetStage']);
+
+        if ($approvedOnly) {
+            $query->approved();
+        } elseif ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
 
         if ($request->filled('keyword')) {
             $keyword = $this->escapeLike($request->keyword);

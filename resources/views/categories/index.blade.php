@@ -55,6 +55,23 @@
         </div>
     </div>
 
+    @if($jumlahPending > 0)
+    <div class="alert alert-warning border-0 shadow-sm d-flex justify-content-between align-items-center">
+        <span><i class="fa-solid fa-hourglass-half me-2"></i>{{ $jumlahPending }} transaksi menunggu verifikasi (Rp {{ number_format($totalPending, 0, ',', '.') }}) belum dihitung sebagai realisasi.</span>
+        <a href="{{ route('transactions.index', ['status' => 'draft']) }}" class="btn btn-sm btn-dark fw-bold">Verifikasi</a>
+    </div>
+    @endif
+
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+            <h6 class="fw-bold mb-0"><i class="fa-solid fa-chart-line me-2 text-primary"></i> Tren Realisasi Bulanan</h6>
+            <span class="badge bg-light text-dark border">Tahun {{ $trenTahun }}</span>
+        </div>
+        <div class="card-body">
+            <canvas id="grafikTren" height="80"></canvas>
+        </div>
+    </div>
+
     <div class="card border-0 shadow-sm mb-5">
         <div class="card-header bg-white py-3 border-bottom">
             <h6 class="fw-bold mb-0"><i class="fa-solid fa-history me-2 text-primary"></i> Riwayat Pencairan Dana (UP / GU)</h6>
@@ -224,3 +241,43 @@
         </div>
     </div>
 @endsection
+
+@push('scripts')
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" integrity="sha384-9nhczxUqK87bcKHh20fSQcTGD4qq5GhayNYSYWqwBkINBhOfQLg/P5HG5lF1urn4" crossorigin="anonymous"></script>
+    <script>
+        const ctxTren = document.getElementById('grafikTren');
+        if (ctxTren && window.Chart) {
+            new Chart(ctxTren, {
+                type: 'bar',
+                data: {
+                    labels: @json($trenLabels),
+                    datasets: [{
+                        label: 'Realisasi (Rp)',
+                        data: @json($trenData),
+                        backgroundColor: 'rgba(30, 64, 175, 0.7)',
+                        borderRadius: 6,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: (c) => 'Rp ' + new Intl.NumberFormat('id-ID').format(c.parsed.y)
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: (v) => 'Rp ' + new Intl.NumberFormat('id-ID').format(v)
+                            }
+                        }
+                    }
+                }
+            });
+        }
+    </script>
+@endpush

@@ -16,7 +16,7 @@ class CategoryController extends Controller
     {
         // A. REALISASI PER POS (1 query agregat, hindari N+1)
         $categories = Category::withSum(['transactions as terpakai_saat_ini' => function ($q) {
-            $q->where('jenis', 'keluar');
+            $q->where('jenis', 'keluar')->where('status', Transaction::STATUS_DISETUJUI);
         }], 'nominal')->get();
 
         foreach ($categories as $cat) {
@@ -27,8 +27,12 @@ class CategoryController extends Controller
 
         // B. DATA GLOBAL
         $totalPagu = BudgetStage::sum('nominal');
-        $totalTerserap = Transaction::where('jenis', 'keluar')->sum('nominal');
+        $totalTerserap = Transaction::where('jenis', 'keluar')->approved()->sum('nominal');
         $persen = $totalPagu > 0 ? ($totalTerserap / $totalPagu) * 100 : 0;
+
+        // B2. MENUNGGU VERIFIKASI
+        $totalPending = Transaction::where('jenis', 'keluar')->where('status', Transaction::STATUS_DRAFT)->sum('nominal');
+        $jumlahPending = Transaction::where('status', Transaction::STATUS_DRAFT)->count();
 
         // C. SISA ALOKASI
         $totalBudgetPos = Category::sum('budget');
@@ -37,13 +41,30 @@ class CategoryController extends Controller
         // D. RIWAYAT GU
         $stages = BudgetStage::orderBy('tanggal_cair', 'desc')->get();
 
+        // E. TREN REALISASI BULANAN (tahun berjalan)
+        $tahun = (int) now()->year;
+        $perBulan = Transaction::where('jenis', 'keluar')
+            ->whereYear('tanggal', $tahun)
+            ->get(['tanggal', 'nominal'])
+            ->groupBy(fn ($t) => (int) $t->tanggal->month)
+            ->map(fn ($rows) => (int) $rows->sum('nominal'));
+
+        $trenLabels = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+        $trenData = collect(range(1, 12))->map(fn ($m) => $perBulan[$m] ?? 0);
+        $trenTahun = $tahun;
+
         return view('categories.index', compact(
             'categories',
             'totalPagu',
             'totalTerserap',
             'persen',
             'sisaAlokasi',
-            'stages'
+            'stages',
+            'trenLabels',
+            'trenData',
+            'trenTahun',
+            'totalPending',
+            'jumlahPending'
         ));
     }
 

@@ -60,6 +60,13 @@
                 <div class="col-md-4"><div class="card bg-primary text-white p-3 text-center shadow-sm"><small>Sisa Kas</small><h6 class="fw-bold">Rp {{ number_format($saldoAkhir, 0, ',', '.') }}</h6></div></div>
             </div>
 
+            @if($jumlahPending > 0)
+            <div class="alert alert-warning border-0 shadow-sm d-flex justify-content-between align-items-center">
+                <span><i class="fa-solid fa-hourglass-half me-2"></i>{{ $jumlahPending }} transaksi menunggu verifikasi (Rp {{ number_format($totalPending, 0, ',', '.') }}).</span>
+                <a href="{{ route('transactions.index', ['status' => 'draft']) }}" class="btn btn-sm btn-dark fw-bold">Lihat</a>
+            </div>
+            @endif
+
             <div class="card mb-3 border-0 shadow-sm">
                 <div class="card-body p-3 bg-white rounded">
                     <form action="{{ route('transactions.index') }}" method="GET" id="searchForm">
@@ -75,7 +82,7 @@
                                     @endforeach
                                 </select>
                             </div>
-                            <div class="col-md-3">
+                            <div class="col-md-2">
                                 <label class="small text-muted fw-bold">Cari Uraian / Penerima</label>
                                 <input type="text" name="keyword" class="form-control form-control-sm" value="{{ request('keyword') }}" placeholder="Kata kunci...">
                             </div>
@@ -87,10 +94,22 @@
                                 <label class="small text-muted fw-bold">Sampai Tanggal</label>
                                 <input type="date" name="end_date" class="form-control form-control-sm" value="{{ request('end_date') }}">
                             </div>
-                            <div class="col-md-3 d-flex gap-2">
-                                <button type="submit" class="btn btn-dark btn-sm w-100 fw-bold"><i class="fa-solid fa-magnifying-glass me-1"></i> Cari</button>
-                                <a href="{{ route('transactions.cetak', request()->all()) }}" target="_blank" class="btn btn-secondary btn-sm w-100 fw-bold">
-                                    <i class="fa-solid fa-print me-1"></i> CETAK
+                            <div class="col-md-2">
+                                <label class="small text-muted fw-bold">Status</label>
+                                <select name="status" class="form-select form-select-sm" onchange="this.form.submit()">
+                                    <option value="">-- Semua --</option>
+                                    <option value="draft" {{ request('status') === 'draft' ? 'selected' : '' }}>Menunggu</option>
+                                    <option value="disetujui" {{ request('status') === 'disetujui' ? 'selected' : '' }}>Disetujui</option>
+                                    <option value="ditolak" {{ request('status') === 'ditolak' ? 'selected' : '' }}>Ditolak</option>
+                                </select>
+                            </div>
+                            <div class="col-md-2 d-flex gap-1">
+                                <button type="submit" class="btn btn-dark btn-sm fw-bold flex-fill" title="Cari"><i class="fa-solid fa-magnifying-glass"></i></button>
+                                <a href="{{ route('transactions.cetak', request()->all()) }}" target="_blank" class="btn btn-secondary btn-sm fw-bold flex-fill" title="Cetak PDF">
+                                    <i class="fa-solid fa-file-pdf"></i>
+                                </a>
+                                <a href="{{ route('transactions.export', request()->all()) }}" class="btn btn-success btn-sm fw-bold flex-fill" title="Ekspor Excel/CSV">
+                                    <i class="fa-solid fa-file-excel"></i>
                                 </a>
                             </div>
                         </div>
@@ -105,10 +124,20 @@
                             <thead class="bg-light small"><tr><th class="ps-4">TANGGAL</th><th>URAIAN</th><th class="text-end">NOMINAL</th><th class="text-center">AKSI</th></tr></thead>
                             <tbody>
                                 @forelse($transactions as $t)
+                                @php
+                                    $statusMeta = match ($t->status) {
+                                        \App\Models\Transaction::STATUS_DISETUJUI => ['Disetujui', 'success'],
+                                        \App\Models\Transaction::STATUS_DITOLAK => ['Ditolak', 'danger'],
+                                        default => ['Menunggu', 'warning text-dark'],
+                                    };
+                                @endphp
                                 <tr>
                                     <td class="ps-4 small text-muted">
                                         {{ $t->tanggal->format('d/m/Y') }}
-                                        <div class="mt-1"><span class="badge bg-light text-dark border">{{ $t->budgetStage->nama_tahap ?? 'Non-GU' }}</span></div>
+                                        <div class="mt-1 d-flex flex-column gap-1 align-items-start">
+                                            <span class="badge bg-light text-dark border">{{ $t->budgetStage->nama_tahap ?? 'Non-GU' }}</span>
+                                            <span class="badge bg-{{ $statusMeta[1] }}">{{ $statusMeta[0] }}</span>
+                                        </div>
                                     </td>
                                     <td>
                                         <div class="fw-bold">{{ $t->category->nama ?? 'Umum' }}</div>
@@ -116,11 +145,23 @@
                                         @if($t->penerima) <div class="small text-primary fst-italic"><i class="fa-solid fa-user me-1"></i> {{ $t->penerima }}</div> @endif
                                     </td>
                                     <td class="text-end text-danger fw-bold">- Rp {{ number_format($t->nominal, 0, ',', '.') }}</td>
-                                    <td class="text-center">
+                                    <td class="text-center text-nowrap">
+                                        @can('verify', $t)
+                                        @if($t->isDraft())
+                                        <form action="{{ route('transactions.verify', $t->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Setujui transaksi ini?')">
+                                            @csrf
+                                            <button class="btn btn-sm btn-success" title="Setujui"><i class="fa-solid fa-check"></i></button>
+                                        </form>
+                                        <form action="{{ route('transactions.reject', $t->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Tolak transaksi ini?')">
+                                            @csrf
+                                            <button class="btn btn-sm btn-warning text-dark" title="Tolak"><i class="fa-solid fa-xmark"></i></button>
+                                        </form>
+                                        @endif
+                                        @endcan
                                         @can('delete', $t)
-                                        <form action="{{ route('transactions.destroy', $t->id) }}" method="POST" onsubmit="return confirm('Hapus?')">
+                                        <form action="{{ route('transactions.destroy', $t->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Hapus?')">
                                             @csrf @method('DELETE')
-                                            <button class="btn btn-sm btn-light text-danger"><i class="fa-solid fa-trash-can"></i></button>
+                                            <button class="btn btn-sm btn-light text-danger" title="Hapus"><i class="fa-solid fa-trash-can"></i></button>
                                         </form>
                                         @endcan
                                     </td>

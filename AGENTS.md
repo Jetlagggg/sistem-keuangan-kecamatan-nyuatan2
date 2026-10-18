@@ -56,6 +56,12 @@ Pengujian memakai SQLite in-memory (`phpunit.xml`), jadi tidak perlu database un
 - **Batas anggaran** dijaga di server oleh `TransactionController::guardBudget()` di dalam
   `DB::transaction` + `lockForUpdate` (aman dari input bersamaan): pengeluaran tidak boleh
   melebihi sisa pagu pos maupun sisa dana tahap.
+- **Status & verifikasi transaksi** (`transactions.status`): `draft`, `disetujui`, `ditolak`.
+  Input bendahara → `draft`; input admin → otomatis `disetujui`. Admin menyetujui/menolak lewat
+  `transactions.verify` / `transactions.reject` (`TransactionPolicy::verify` = admin). Hanya
+  transaksi `disetujui` (scope `approved`) yang dihitung sebagai realisasi dan tampil di laporan
+  PDF/CSV; `guardBudget` tetap menghitung semua status agar pagu tidak terlampaui oleh draft.
+- **Bahasa**: locale `id` (`lang/id`), pesan validasi/auth/paginasi berbahasa Indonesia.
 - **Audit trail**: setiap perubahan memanggil `ActivityLog::record(...)`.
 - **Keamanan**: middleware `App\Http\Middleware\SecurityHeaders` menambahkan CSP & header
   keamanan ke semua respons; login dibatasi rate limit. HTTPS dipaksa saat `APP_ENV=production`.

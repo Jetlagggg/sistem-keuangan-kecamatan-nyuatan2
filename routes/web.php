@@ -35,9 +35,16 @@ Route::middleware(['auth'])->group(function () {
     // 1. Cetak Laporan PDF
     Route::get('/transactions/cetak', [TransactionController::class, 'cetak'])->name('transactions.cetak');
 
+    // 1b. Ekspor Laporan Excel/CSV
+    Route::get('/transactions/export', [TransactionController::class, 'export'])->name('transactions.export');
+
     // 2. Kelola Transaksi (hanya method yang tersedia)
     Route::resource('transactions', TransactionController::class)
         ->only(['index', 'store', 'update', 'destroy']);
+
+    // 2b. Verifikasi transaksi (admin)
+    Route::post('/transactions/{transaction}/verify', [TransactionController::class, 'verify'])->name('transactions.verify');
+    Route::post('/transactions/{transaction}/reject', [TransactionController::class, 'reject'])->name('transactions.reject');
 
     // 3. Riwayat Aktivitas (audit trail)
     Route::get('/activity-logs', [ActivityLogController::class, 'index'])->name('activity-logs.index');

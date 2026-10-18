@@ -11,6 +11,13 @@ class CategoryTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_authenticated_user_can_view_monev_dashboard(): void
+    {
+        $bendahara = User::factory()->bendahara()->create();
+
+        $this->actingAs($bendahara)->get(route('dashboard'))->assertOk();
+    }
+
     public function test_budget_is_parsed_and_stored_when_creating_category(): void
     {
         $bendahara = User::factory()->bendahara()->create();

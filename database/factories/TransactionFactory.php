@@ -29,6 +29,16 @@ class TransactionFactory extends Factory
             'penerima' => fake()->name(),
             'keterangan' => fake()->sentence(),
             'jenis' => 'keluar',
+            'status' => Transaction::STATUS_DISETUJUI,
         ];
+    }
+
+    public function draft(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'status' => Transaction::STATUS_DRAFT,
+            'verified_by' => null,
+            'verified_at' => null,
+        ]);
     }
 }

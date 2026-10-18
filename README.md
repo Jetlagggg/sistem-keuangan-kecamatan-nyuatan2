@@ -9,11 +9,15 @@ Aplikasi web monitoring & evaluasi (Monev) anggaran serta pencatatan transaksi k
 - **Monitoring & Evaluasi Anggaran** — pagu kantor, serapan, sisa alokasi, realisasi per pos.
 - **Pencairan Dana (UP/GU)** — input dan hapus tahapan dana.
 - **Transaksi Harian** — input, ubah, hapus (soft delete) dengan validasi pagu di sisi server.
+- **Verifikasi Transaksi** — input bendahara berstatus *draft* menunggu persetujuan admin; hanya transaksi *disetujui* yang dihitung sebagai realisasi.
 - **Cetak Laporan PDF** (dompdf) dengan filter periode, kata kunci, dan sumber dana.
+- **Ekspor Excel/CSV** — unduh laporan transaksi sesuai filter aktif.
+- **Grafik Tren Realisasi** bulanan pada halaman Monev.
 - **Riwayat Aktivitas** (audit trail) — mencatat login, logout, dan perubahan data beserta IP.
 - **Manajemen Pengguna** (admin) — tambah/ubah/hapus akun, atur role, dan reset kata sandi.
 - **Arsip Data** (admin) — data yang dihapus dapat dipulihkan atau dihapus permanen.
 - **Profil Saya** — setiap pengguna dapat mengubah nama, email, dan kata sandinya sendiri.
+- **Antarmuka berbahasa Indonesia** (pesan validasi, autentikasi, paginasi).
 - **Halaman error kustom** (403/404/500) berbahasa Indonesia.
 
 ## Kebutuhan
@@ -50,6 +54,7 @@ php artisan serve
 - Validasi input ketat (`exists`, batas nominal, format angka).
 - Pengeluaran tidak boleh melebihi sisa pagu pos maupun sisa dana tahap.
 - Data keuangan memakai soft delete (tidak terhapus permanen).
+- Transaksi wajib diverifikasi admin sebelum masuk laporan/realisasi resmi.
 - Security header (CSP, X-Frame-Options, nosniff, Referrer-Policy) via middleware.
 - HTTPS dipaksa otomatis saat `APP_ENV=production`.
 
