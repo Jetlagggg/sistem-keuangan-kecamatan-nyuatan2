@@ -3,246 +3,254 @@
 @section('title', 'Monev Anggaran')
 
 @section('content')
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div class="d-flex align-items-center">
-            <i class="fa-solid fa-chart-pie fs-2 me-3 text-primary"></i>
-            <div>
-                <h4 class="fw-bold mb-0">MONEV ANGGARAN</h4>
-                <small class="text-muted">Monitoring &amp; Evaluasi Keuangan Kecamatan</small>
-            </div>
+    <div class="page-head">
+        <div>
+            <h1 class="page-title">Monev Anggaran</h1>
+            <p class="page-sub">Monitoring &amp; evaluasi keuangan Kecamatan Nyuatan. Pagu, terserap, dan sisa alokasi dibaca sebagai satu lembar kas.</p>
         </div>
-        <div class="d-flex gap-2">
-            <a href="{{ route('categories.laporan') }}" target="_blank" class="btn btn-outline-secondary fw-bold">
-                <i class="fa-solid fa-file-pdf me-1"></i> Laporan Pos
+        <div class="page-actions">
+            @if($sisaAlokasi < 0)
+                <span class="stamp">Alokasi Melebihi Pagu</span>
+            @endif
+            <a href="{{ route('categories.laporan') }}" target="_blank" class="btn btn-secondary">
+                <i class="fa-solid fa-file-pdf me-1" aria-hidden="true"></i> Laporan Pos
             </a>
-            <a href="{{ route('categories.laporan.csv') }}" class="btn btn-outline-success fw-bold">
-                <i class="fa-solid fa-file-excel me-1"></i> Excel
+            <a href="{{ route('categories.laporan.csv') }}" class="btn btn-secondary">
+                <i class="fa-solid fa-file-excel me-1" aria-hidden="true"></i> Excel
             </a>
             @can('create', App\Models\Category::class)
-            <button class="btn btn-primary fw-bold" data-bs-toggle="modal" data-bs-target="#createModal">
-                <i class="fa-solid fa-plus me-2"></i> Buat Pos Baru
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createModal">
+                <i class="fa-solid fa-plus me-1" aria-hidden="true"></i> Buat Pos Baru
             </button>
             @endcan
         </div>
     </div>
 
-    <div class="row mb-4">
-        <div class="col-md-4">
-            <div class="card card-summary card-pagu h-100 p-4">
-                <h6 class="text-uppercase text-white-50 fw-bold small mb-2">Total Pagu Kantor (UP + GU)</h6>
-                <h2 class="fw-bold text-warning mb-0">Rp {{ number_format($totalPagu, 0, ',', '.') }}</h2>
-                <small class="opacity-50">Akumulasi dana masuk</small>
-            </div>
+    <section class="ledger-summary" aria-label="Ringkasan anggaran">
+        <div class="summary-cell">
+            <div class="summary-label">Total Pagu Kantor (UP + GU)</div>
+            <div class="summary-value">Rp {{ number_format($totalPagu, 0, ',', '.') }}</div>
+            <div class="summary-note">Akumulasi dana masuk dari {{ $stages->count() }} tahap</div>
         </div>
-        <div class="col-md-4">
-            <div class="card card-summary card-serap h-100 p-4">
-                <h6 class="text-uppercase text-white-50 fw-bold small mb-2">Total Terserap</h6>
-                <h2 class="fw-bold mb-0">Rp {{ number_format($totalTerserap, 0, ',', '.') }}</h2>
-
-                <div class="progress mt-3" style="height: 6px; background: rgba(255,255,255,0.1);">
-                    <div class="progress-bar bg-info" style="width: {{ $persen }}%"></div>
-                </div>
-                <div class="d-flex justify-content-between mt-1">
-                    <small class="text-info fw-bold">{{ number_format($persen, 1) }}%</small>
-                    <small class="opacity-50">Terealisasi</small>
-                </div>
-            </div>
+        <div class="summary-cell">
+            <div class="summary-label">Total Terserap</div>
+            <div class="summary-value">Rp {{ number_format($totalTerserap, 0, ',', '.') }}</div>
+            <div class="summary-note">{{ number_format($persen, 1, ',', '.') }}% dari pagu kantor terealisasi</div>
         </div>
-        <div class="col-md-4">
-            <div class="card card-summary card-sisa h-100 p-4">
-                <h6 class="text-uppercase text-white-50 fw-bold small mb-2">Sisa Alokasi Anggaran</h6>
-                <h2 class="fw-bold {{ $sisaAlokasi < 0 ? 'text-danger' : 'text-success' }} mb-0">
-                    Rp {{ number_format($sisaAlokasi, 0, ',', '.') }}
-                </h2>
+        <div class="summary-cell {{ $sisaAlokasi < 0 ? 'is-negative' : '' }}">
+            <div class="summary-label">Sisa Alokasi Anggaran</div>
+            <div class="summary-value">{{ $sisaAlokasi < 0 ? '−' : '' }}Rp {{ number_format(abs($sisaAlokasi), 0, ',', '.') }}</div>
+            <div class="summary-note">
                 @if($sisaAlokasi < 0)
-                    <small class="text-danger fw-bold"><i class="fa-solid fa-triangle-exclamation me-1"></i> Alokasi pos melebihi pagu kantor!</small>
+                    Alokasi pos melebihi pagu kantor
                 @else
-                    <small class="opacity-50">Dana yang belum dibagi ke Pos Kegiatan</small>
+                    Dana yang belum dibagi ke pos kegiatan
                 @endif
             </div>
         </div>
-    </div>
+    </section>
 
     @if($jumlahPending > 0)
-    <div class="alert alert-warning border-0 shadow-sm d-flex justify-content-between align-items-center">
-        <span><i class="fa-solid fa-hourglass-half me-2"></i>{{ $jumlahPending }} transaksi menunggu verifikasi (Rp {{ number_format($totalPending, 0, ',', '.') }}) belum dihitung sebagai realisasi.</span>
-        <a href="{{ route('transactions.index', ['status' => 'draft']) }}" class="btn btn-sm btn-dark fw-bold">Verifikasi</a>
+    <div class="alert alert-warning d-flex flex-wrap justify-content-between align-items-center gap-2" role="status">
+        <span><i class="fa-solid fa-hourglass-half me-2" aria-hidden="true"></i>{{ $jumlahPending }} transaksi menunggu verifikasi (Rp {{ number_format($totalPending, 0, ',', '.') }}) belum dihitung sebagai realisasi.</span>
+        <a href="{{ route('transactions.index', ['status' => 'draft']) }}" class="btn btn-sm btn-primary">Verifikasi</a>
     </div>
     @endif
 
-    <div class="card border-0 shadow-sm mb-4">
-        <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
-            <h6 class="fw-bold mb-0"><i class="fa-solid fa-chart-line me-2 text-primary"></i> Tren Realisasi Bulanan</h6>
-            <span class="badge bg-light text-dark border">Tahun {{ $trenTahun }}</span>
+    <section class="sheet" aria-labelledby="tren-title">
+        <div class="sheet-head">
+            <h2 class="sheet-title" id="tren-title">Tren Realisasi Bulanan</h2>
+            <span class="sheet-meta">Tahun {{ $trenTahun }}</span>
         </div>
-        <div class="card-body">
-            <canvas id="grafikTren" height="80"></canvas>
+        <div class="sheet-body">
+            <canvas id="grafikTren" height="80" role="img" aria-label="Grafik realisasi pengeluaran per bulan tahun {{ $trenTahun }}"></canvas>
         </div>
-    </div>
+    </section>
 
-    <div class="card border-0 shadow-sm mb-5">
-        <div class="card-header bg-white py-3 border-bottom">
-            <h6 class="fw-bold mb-0"><i class="fa-solid fa-history me-2 text-primary"></i> Riwayat Pencairan Dana (UP / GU)</h6>
+    <section class="sheet" aria-labelledby="riwayat-title">
+        <div class="sheet-head">
+            <h2 class="sheet-title" id="riwayat-title">Riwayat Pencairan Dana (UP / GU)</h2>
+            <span class="sheet-meta">{{ $stages->count() }} tahap · total Rp {{ number_format($totalPagu, 0, ',', '.') }}</span>
         </div>
-        <div class="card-body p-0">
-            <div class="table-responsive">
-                <table class="table table-hover table-gu mb-0 align-middle">
-                    <thead>
-                        <tr>
-                            <th class="ps-4">Tahapan</th>
-                            <th>Tanggal Cair</th>
-                            <th>Keterangan</th>
-                            <th class="text-end">Nominal</th>
-                            <th class="text-center">Aksi</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @forelse($stages as $stg)
-                        <tr>
-                            <td class="ps-4">
-                                <span class="badge bg-primary">{{ $stg->nama_tahap }}</span>
-                            </td>
-                            <td>{{ $stg->tanggal_cair->format('d M Y') }}</td>
-                            <td class="text-muted small">{{ $stg->keterangan ?? '-' }}</td>
-                            <td class="text-end fw-bold">Rp {{ number_format($stg->nominal, 0, ',', '.') }}</td>
-                            <td class="text-center">
-                                @can('delete', $stg)
-                                <form action="{{ route('budget.destroy', $stg) }}" method="POST" onsubmit="return confirm('Hapus dana ini? Pagu kantor akan berkurang.')">
-                                    @csrf @method('DELETE')
-                                    <button class="btn btn-sm btn-outline-danger">
-                                        <i class="fa-solid fa-trash"></i>
-                                    </button>
-                                </form>
-                                @endcan
-                            </td>
-                        </tr>
-                        @empty
-                        <tr>
-                            <td colspan="5" class="text-center py-4 text-muted">Belum ada data UP/GU. Silakan input tombol kuning di atas.</td>
-                        </tr>
-                        @endforelse
-                    </tbody>
-                </table>
-            </div>
+        <div class="table-responsive">
+            <table class="table-ledger">
+                <thead>
+                    <tr>
+                        <th scope="col">Tanggal</th>
+                        <th scope="col">Tahapan</th>
+                        <th scope="col">Keterangan</th>
+                        <th scope="col" class="num">Nominal</th>
+                        <th scope="col" class="balance">Saldo Kas</th>
+                        <th scope="col" class="center">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @php $saldoKas = 0; @endphp
+                    @forelse($stages as $stg)
+                    @php $saldoKas += $stg->nominal; @endphp
+                    <tr>
+                        <td class="cell-date">{{ $stg->tanggal_cair->format('d/m/Y') }}</td>
+                        <td><span class="tag tag-muted">{{ $stg->nama_tahap }}</span></td>
+                        <td>{{ $stg->keterangan ?? '—' }}</td>
+                        <td class="num">Rp {{ number_format($stg->nominal, 0, ',', '.') }}</td>
+                        <td class="balance">Rp {{ number_format($saldoKas, 0, ',', '.') }}</td>
+                        <td class="center">
+                            @can('delete', $stg)
+                            <form action="{{ route('budget.destroy', $stg) }}" method="POST" onsubmit="return confirm('Hapus dana ini? Pagu kantor akan berkurang dan data dipindahkan ke arsip.')">
+                                @csrf @method('DELETE')
+                                <button class="btn btn-sm btn-outline-danger">Hapus</button>
+                            </form>
+                            @endcan
+                        </td>
+                    </tr>
+                    @empty
+                    <tr class="empty-row">
+                        <td colspan="6">Belum ada dana UP/GU. Gunakan tombol Input Dana (GU) di atas.</td>
+                    </tr>
+                    @endforelse
+                </tbody>
+                @if($stages->isNotEmpty())
+                <tfoot>
+                    <tr>
+                        <td colspan="3">Jumlah Dana Masuk</td>
+                        <td class="num">Rp {{ number_format($totalPagu, 0, ',', '.') }}</td>
+                        <td class="balance">Rp {{ number_format($totalPagu, 0, ',', '.') }}</td>
+                        <td></td>
+                    </tr>
+                </tfoot>
+                @endif
+            </table>
         </div>
-    </div>
+    </section>
 
-    <div class="d-flex justify-content-between align-items-center mb-3">
+    <div class="section-head">
         <div>
-            <h5 class="fw-bold mb-1">Daftar Pos Kegiatan</h5>
-            <p class="text-muted small mb-0">Rincian pembagian anggaran per kegiatan.</p>
+            <h2 class="section-title">Daftar Pos Kegiatan</h2>
+            <p class="section-note">Pagu, realisasi, dan sisa dana tiap pos. Baris penuh ditandai merah.</p>
         </div>
+        <span class="meta-line">{{ $categories->count() }} pos · pagu Rp {{ number_format($categories->sum('budget'), 0, ',', '.') }}</span>
     </div>
 
-    <div class="row">
-        @foreach($categories as $category)
-        <div class="col-md-6 mb-4">
-            <div class="card border-0 shadow-sm h-100">
-                <div class="card-body p-4">
-                    <div class="d-flex justify-content-between align-items-start mb-3">
-                        <div class="d-flex align-items-center">
-                            <div class="bg-light rounded p-3 me-3 text-primary">
-                                <i class="fa-solid fa-folder-open fs-4"></i>
-                            </div>
-                            <div>
-                                <h6 class="fw-bold text-dark mb-1">{{ $category->nama }}</h6>
-                                <small class="text-muted">Pagu: Rp {{ number_format($category->budget, 0, ',', '.') }}</small>
-                            </div>
-                        </div>
-                        <div class="text-end">
-                            <h6 class="fw-bold text-success mb-0">Rp {{ number_format($category->sisa_saat_ini, 0, ',', '.') }}</h6>
-                            <small class="text-muted" style="font-size: 11px;">Sisa Dana</small>
-                        </div>
-                    </div>
-
-                    <div class="d-flex justify-content-between small mb-1">
-                        <span>Realisasi: Rp {{ number_format($category->terpakai_saat_ini, 0, ',', '.') }}</span>
-                        <span class="fw-bold {{ $category->persen_realisasi >= 100 ? 'text-danger' : 'text-dark' }}">
-                            {{ number_format($category->persen_realisasi, 1) }}%
-                        </span>
-                    </div>
-
-                    <div class="progress mb-3" style="height: 8px;">
-                        <div class="progress-bar {{ $category->persen_realisasi >= 100 ? 'bg-danger' : 'bg-warning' }}"
-                             role="progressbar"
-                             style="width: {{ $category->persen_realisasi }}%">
-                        </div>
-                    </div>
-
-                    <div class="d-flex justify-content-end gap-2">
-                        @can('update', $category)
-                        <button class="btn btn-sm btn-outline-warning fw-bold px-3"
-                            data-bs-toggle="modal"
-                            data-bs-target="#editModal{{ $category->id }}">
-                            <i class="fa-solid fa-pen"></i> Edit
-                        </button>
-                        @endcan
-                        @can('delete', $category)
-                        <form action="{{ route('categories.destroy', $category->id) }}" method="POST" onsubmit="return confirm('Hapus Pos ini?')">
-                            @csrf @method('DELETE')
-                            <button class="btn btn-sm btn-outline-danger fw-bold px-3">
-                                <i class="fa-solid fa-trash"></i> Hapus
-                            </button>
-                        </form>
-                        @endcan
-                    </div>
+    <div class="pos-grid">
+        @forelse($categories as $category)
+        @php
+            $penuh = $category->sisa_saat_ini <= 0 || $category->persen_realisasi >= 100;
+            $lebar = max(0, min(100, $category->persen_realisasi));
+        @endphp
+        <article class="pos-sheet {{ $penuh ? 'pos-full' : '' }}">
+            <div class="pos-head">
+                <h3 class="pos-name">{{ $category->nama }}</h3>
+                <span class="pos-index">
+                    @if($penuh)
+                        <span class="tag tag-red">Pagu Habis</span>
+                    @else
+                        {{ str_pad($loop->iteration, 2, '0', STR_PAD_LEFT) }}
+                    @endif
+                </span>
+            </div>
+            <div class="pos-figures">
+                <div class="pos-figure">
+                    <span class="k">Pagu</span>
+                    <div class="v">Rp {{ number_format($category->budget, 0, ',', '.') }}</div>
+                </div>
+                <div class="pos-figure">
+                    <span class="k">Terserap</span>
+                    <div class="v">Rp {{ number_format($category->terpakai_saat_ini, 0, ',', '.') }}</div>
+                </div>
+                <div class="pos-figure">
+                    <span class="k">Sisa</span>
+                    <div class="v {{ $category->sisa_saat_ini < 0 ? 'negative' : '' }}">Rp {{ number_format($category->sisa_saat_ini, 0, ',', '.') }}</div>
                 </div>
             </div>
-
-            <div class="modal fade" id="editModal{{ $category->id }}" tabindex="-1">
-                <div class="modal-dialog">
-                    <form action="{{ route('categories.update', $category->id) }}" method="POST">
-                        @csrf @method('PUT')
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <h5 class="modal-title fw-bold">Edit Pos Anggaran</h5>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                            </div>
-                            <div class="modal-body">
-                                <div class="mb-3">
-                                    <label class="form-label fw-bold">Nama Pos Kegiatan</label>
-                                    <input type="text" name="nama" class="form-control" value="{{ $category->nama }}" required>
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label fw-bold">Pagu Anggaran (Rp)</label>
-                                    <input type="text" name="budget" class="form-control input-rupiah"
-                                        value="{{ number_format($category->budget, 0, ',', '.') }}" required>
-                                    <small class="text-muted">Total dana maksimal untuk pos ini.</small>
-                                </div>
-                            </div>
-                            <div class="modal-footer">
-                                <button type="submit" class="btn btn-warning fw-bold">Update Pos</button>
-                            </div>
-                        </div>
+            <div class="pos-body">
+                <div class="pos-realisation">
+                    <div class="realisasi-track" role="img" aria-label="Realisasi {{ number_format($category->persen_realisasi, 1, ',', '.') }} persen">
+                        <div class="realisasi-fill" style="width: {{ $lebar }}%"></div>
+                    </div>
+                    <span class="pos-percent">{{ number_format($category->persen_realisasi, 1, ',', '.') }}%</span>
+                </div>
+                <div class="pos-note {{ $penuh ? 'warning' : '' }}">
+                    @if($penuh)
+                        Tidak ada sisa pagu untuk pos ini.
+                    @else
+                        Sisa Rp {{ number_format($category->sisa_saat_ini, 0, ',', '.') }} dari pagu pos.
+                    @endif
+                </div>
+                <div class="pos-actions">
+                    @can('update', $category)
+                    <button class="btn btn-sm btn-outline-warning" data-bs-toggle="modal" data-bs-target="#editModal{{ $category->id }}">
+                        Edit
+                    </button>
+                    @endcan
+                    @can('delete', $category)
+                    <form action="{{ route('categories.destroy', $category->id) }}" method="POST" onsubmit="return confirm('Hapus pos ini? Pos dipindahkan ke arsip dan dapat dipulihkan admin.')">
+                        @csrf @method('DELETE')
+                        <button class="btn btn-sm btn-outline-danger">Hapus</button>
                     </form>
+                    @endcan
                 </div>
             </div>
+        </article>
+
+        <div class="modal fade" id="editModal{{ $category->id }}" tabindex="-1" aria-labelledby="editModalLabel{{ $category->id }}" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <form action="{{ route('categories.update', $category->id) }}" method="POST">
+                    @csrf @method('PUT')
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h2 class="modal-title" id="editModalLabel{{ $category->id }}">Edit Pos Anggaran</h2>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="mb-3">
+                                <label class="form-label" for="nama{{ $category->id }}">Nama Pos Kegiatan</label>
+                                <input type="text" id="nama{{ $category->id }}" name="nama" class="form-control" value="{{ $category->nama }}" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label" for="budget{{ $category->id }}">Pagu Anggaran (Rp)</label>
+                                <input type="text" id="budget{{ $category->id }}" name="budget" class="form-control input-rupiah" value="{{ number_format($category->budget, 0, ',', '.') }}" required>
+                                <small class="form-hint">Total dana maksimal untuk pos ini.</small>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                            <button type="submit" class="btn btn-primary">Update Pos</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
         </div>
-        @endforeach
+        @empty
+        <div class="ledger-note" style="grid-column: 1 / -1;">
+            <h3>Belum ada pos kegiatan</h3>
+            <p>Buat pos pertama untuk membagi pagu kantor ke kegiatan. Setiap transaksi akan menahan sisa pagu pos ini.</p>
+        </div>
+        @endforelse
     </div>
 
-    <div class="modal fade" id="createModal" tabindex="-1">
-        <div class="modal-dialog">
+    <div class="modal fade" id="createModal" tabindex="-1" aria-labelledby="createModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
             <form action="{{ route('categories.store') }}" method="POST">
                 @csrf
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title fw-bold">Buat Pos Kegiatan Baru</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        <h2 class="modal-title" id="createModalLabel">Buat Pos Kegiatan Baru</h2>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button>
                     </div>
                     <div class="modal-body">
                         <div class="mb-3">
-                            <label class="form-label fw-bold">Nama Pos Kegiatan</label>
-                            <input type="text" name="nama" class="form-control" placeholder="Contoh: Belanja ATK" required>
+                            <label class="form-label" for="namaPosBaru">Nama Pos Kegiatan</label>
+                            <input type="text" id="namaPosBaru" name="nama" class="form-control" placeholder="Contoh: Belanja ATK" required>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label fw-bold">Alokasi Pagu (Rp)</label>
-                            <input type="text" name="budget" class="form-control input-rupiah" placeholder="0" required>
-                            <small class="text-muted">Total dana yang dialokasikan untuk pos ini.</small>
+                            <label class="form-label" for="paguPosBaru">Alokasi Pagu (Rp)</label>
+                            <input type="text" id="paguPosBaru" name="budget" class="form-control input-rupiah" placeholder="0" required>
+                            <small class="form-hint">Total dana yang dialokasikan untuk pos ini.</small>
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <button type="submit" class="btn btn-primary fw-bold">Simpan Pos</button>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                        <button type="submit" class="btn btn-primary">Simpan Pos</button>
                     </div>
                 </div>
             </form>
@@ -253,17 +261,38 @@
 @push('scripts')
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" integrity="sha384-9nhczxUqK87bcKHh20fSQcTGD4qq5GhayNYSYWqwBkINBhOfQLg/P5HG5lF1urn4" crossorigin="anonymous"></script>
     <script>
-        const ctxTren = document.getElementById('grafikTren');
-        if (ctxTren && window.Chart) {
-            new Chart(ctxTren, {
+        (function () {
+            const canvas = document.getElementById('grafikTren');
+            if (!canvas || !window.Chart) {
+                return;
+            }
+
+            const root = document.documentElement;
+            const rgb = (value) => value.replace(/\s+/g, '');
+
+            function chartColors() {
+                const styles = getComputedStyle(root);
+
+                return {
+                    red: rgb(styles.getPropertyValue('--red')),
+                    muted: rgb(styles.getPropertyValue('--muted')),
+                    rule: rgb(styles.getPropertyValue('--rule')),
+                };
+            }
+
+            const colors = chartColors();
+            const chart = new Chart(canvas, {
                 type: 'bar',
                 data: {
                     labels: @json($trenLabels),
                     datasets: [{
                         label: 'Realisasi (Rp)',
                         data: @json($trenData),
-                        backgroundColor: 'rgba(30, 64, 175, 0.7)',
-                        borderRadius: 6,
+                        backgroundColor: colors.red,
+                        borderColor: colors.red,
+                        borderWidth: 1,
+                        borderRadius: 0,
+                        maxBarThickness: 28,
                     }]
                 },
                 options: {
@@ -272,20 +301,39 @@
                         legend: { display: false },
                         tooltip: {
                             callbacks: {
-                                label: (c) => 'Rp ' + new Intl.NumberFormat('id-ID').format(c.parsed.y)
+                                label: (ctx) => 'Rp ' + new Intl.NumberFormat('id-ID').format(ctx.parsed.y)
                             }
                         }
                     },
                     scales: {
+                        x: {
+                            grid: { display: false },
+                            border: { color: colors.rule },
+                            ticks: { color: colors.muted, font: { family: 'Roboto Mono', size: 10 } }
+                        },
                         y: {
                             beginAtZero: true,
+                            grid: { color: colors.rule },
+                            border: { display: false },
                             ticks: {
-                                callback: (v) => 'Rp ' + new Intl.NumberFormat('id-ID').format(v)
+                                color: colors.muted,
+                                callback: (value) => 'Rp ' + new Intl.NumberFormat('id-ID').format(value)
                             }
                         }
                     }
                 }
             });
-        }
+
+            document.addEventListener('themechange', function () {
+                const next = chartColors();
+                chart.data.datasets[0].backgroundColor = next.red;
+                chart.data.datasets[0].borderColor = next.red;
+                chart.options.scales.x.ticks.color = next.muted;
+                chart.options.scales.x.border.color = next.rule;
+                chart.options.scales.y.ticks.color = next.muted;
+                chart.options.scales.y.grid.color = next.rule;
+                chart.update('none');
+            });
+        })();
     </script>
 @endpush

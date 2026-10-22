@@ -7,9 +7,14 @@ Panduan singkat untuk agen/developer yang bekerja di repo ini.
 Sistem Keuangan Kecamatan Nyuatan — aplikasi Laravel 12 (PHP ^8.2) berbasis Blade +
 Bootstrap untuk monev anggaran dan pencatatan transaksi keuangan.
 
-- Aset frontend dimuat via **CDN** (Bootstrap, Font Awesome, Google Fonts) dengan SRI.
+- Aset frontend dimuat via **CDN** (Bootstrap, Font Awesome, Google Fonts) dengan SRI,
+  ditambah stylesheet lokal `public/css/buku-kas.css` untuk redesign Buku Kas.
   Tampilan **tidak** memakai `@vite`, jadi `npm install`/`npm run build` tidak wajib
   untuk menjalankan aplikasi.
+- Sistem visual didokumentasikan di `DESIGN.md` (token, tipografi, komponen); sidecar
+  mesin ada di `.impeccable/design.json`.
+- Tema gelap/terang dikelola `public/js/theme.js`; preferensi disimpan di
+  `localStorage` (`buku-kas-theme`) dan default mengikuti preferensi sistem.
 - Zona waktu aplikasi: `Asia/Makassar` (lihat `config/app.php`).
 
 ## Perintah Penting

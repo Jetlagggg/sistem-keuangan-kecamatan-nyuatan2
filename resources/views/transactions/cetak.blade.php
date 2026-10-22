@@ -1,54 +1,61 @@
 <!DOCTYPE html>
-<html>
+<html lang="id">
 <head>
+    <meta charset="UTF-8">
     <title>Laporan Keuangan</title>
     <style>
-        body { font-family: sans-serif; font-size: 12px; }
-        
-        /* Style Header Kop Surat */
-        .header-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; border-bottom: 3px double black; }
-        .header-table td { border: none; padding: 5px; vertical-align: middle; }
-        
-        /* Style Judul Laporan */
-        .judul-laporan { text-align: center; margin-bottom: 15px; }
+        @page { size: A4 landscape; margin: 15mm 14mm; }
+        body { font-family: "DejaVu Sans", sans-serif; font-size: 10.5px; color: #111; line-height: 1.45; }
 
-        /* Style Tabel Data */
-        .data-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        .data-table th, .data-table td { border: 1px solid #000; padding: 6px; text-align: left; }
-        .data-table th { background-color: #f0f0f0; text-align: center; }
-        
+        .header-table { width: 100%; border-collapse: collapse; margin-bottom: 16px; border-bottom: 3px double #111; }
+        .header-table td { border: none; padding: 4px 6px; vertical-align: middle; }
+
+        .judul-laporan { text-align: center; margin-bottom: 14px; }
+        .judul-laporan h3 { margin: 0; font-size: 13px; text-transform: uppercase; text-decoration: underline; letter-spacing: .02em; }
+        .judul-laporan p { margin: 4px 0 2px; font-size: 10.5px; }
+        .judul-laporan small { font-family: "DejaVu Sans Mono", monospace; font-size: 9px; color: #444; }
+
+        .data-table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+        .data-table thead { display: table-header-group; }
+        .data-table th, .data-table td { border: 1px solid #333; padding: 5px 6px; text-align: left; vertical-align: top; }
+        .data-table th { background-color: #f0f0ef; text-align: center; font-size: 9.5px; text-transform: uppercase; letter-spacing: .03em; }
+        .data-table tr { page-break-inside: avoid; }
+
         .text-end { text-align: right; }
         .text-center { text-align: center; }
-        .footer { margin-top: 30px; text-align: right; page-break-inside: avoid; }
-        
-        .summary-row td { border-top: 2px solid #000; font-weight: bold; background-color: #f9f9f9; }
+        .mono { font-family: "DejaVu Sans Mono", monospace; font-size: 9.5px; }
+        .footer { margin-top: 26px; text-align: right; page-break-inside: avoid; }
+        .footer p { margin: 0; }
+
+        .summary-row td { border-top: 3px double #111; font-weight: bold; background-color: #f7f7f6; font-size: 10px; }
+        .summary-row.final td { border-top: 1px solid #333; font-size: 11px; background-color: #eee; }
     </style>
 </head>
 <body>
 
     <table class="header-table">
         <tr>
-           <td width="15%" class="text-center">
+            <td width="15%" class="text-center">
                 @php
                     $logoPath = public_path(config('laporan.logo'));
                 @endphp
 
                 @if (file_exists($logoPath))
-                    <img src="data:image/png;base64,{{ base64_encode(file_get_contents($logoPath)) }}" style="height: 80px; width: auto;">
+                    <img src="data:image/png;base64,{{ base64_encode(file_get_contents($logoPath)) }}" style="height: 70px; width: auto;">
                 @endif
             </td>
-            
+
             <td width="85%" class="text-center">
-                <h2 style="margin:0; font-size: 18px; text-transform: uppercase;">{{ config('laporan.instansi.pemerintah') }}</h2>
-                <h1 style="margin:5px 0; font-size: 20px; text-transform: uppercase;">{{ config('laporan.instansi.kantor') }}</h1>
-                <p style="margin:0; font-size: 11px; font-style: italic;">Alamat: {{ config('laporan.instansi.alamat') }}</p>
+                <h2 style="margin:0; font-size: 15px; text-transform: uppercase; letter-spacing: .03em;">{{ config('laporan.instansi.pemerintah') }}</h2>
+                <h1 style="margin:4px 0; font-size: 17px; text-transform: uppercase; letter-spacing: .04em;">{{ config('laporan.instansi.kantor') }}</h1>
+                <p style="margin:0; font-size: 9.5px; font-style: italic;">Alamat: {{ config('laporan.instansi.alamat') }}</p>
             </td>
         </tr>
     </table>
 
     <div class="judul-laporan">
-        <h3 style="margin:0; text-transform: uppercase; text-decoration: underline;">{{ $judulLaporan }}</h3>
-        <p style="margin:5px 0;">Laporan Realisasi Keuangan</p>
+        <h3>{{ $judulLaporan }}</h3>
+        <p>Laporan Realisasi Keuangan</p>
         <small>Dicetak pada: {{ date('d F Y H:i') }}</small>
     </div>
 
@@ -68,31 +75,31 @@
             @php $no = 1; @endphp
             @foreach($transactions as $t)
             <tr>
-                <td class="text-center">{{ $no++ }}</td>
-                <td>{{ $t->tanggal->format('d/m/Y') }}</td>
+                <td class="text-center mono">{{ $no++ }}</td>
+                <td class="mono">{{ $t->tanggal->format('d/m/Y') }}</td>
                 <td>{{ $t->category->nama ?? '-' }}</td>
                 <td>{{ $t->keterangan }}</td>
                 <td>{{ $t->penerima }}</td>
                 <td class="text-center">{{ $t->budgetStage->nama_tahap ?? '-' }}</td>
-                <td class="text-end">{{ number_format($t->nominal, 0, ',', '.') }}</td>
+                <td class="text-end mono">{{ number_format($t->nominal, 0, ',', '.') }}</td>
             </tr>
             @endforeach
         </tbody>
-        
+
         <tfoot>
             <tr class="summary-row">
                 <td colspan="6" class="text-end">TOTAL REALISASI PENGELUARAN</td>
-                <td class="text-end">Rp {{ number_format($totalKeluar, 0, ',', '.') }}</td>
+                <td class="text-end mono">Rp {{ number_format($totalKeluar, 0, ',', '.') }}</td>
             </tr>
 
-            <tr style="font-weight: bold; background-color: #e8f5e9;">
+            <tr class="summary-row">
                 <td colspan="6" class="text-end">TOTAL PAGU ANGGARAN (DANA MASUK)</td>
-                <td class="text-end">Rp {{ number_format($totalMasuk, 0, ',', '.') }}</td>
+                <td class="text-end mono">Rp {{ number_format($totalMasuk, 0, ',', '.') }}</td>
             </tr>
 
-            <tr style="font-weight: bold; background-color: #e3f2fd; font-size: 13px;">
+            <tr class="summary-row final">
                 <td colspan="6" class="text-end">SISA KAS (SALDO)</td>
-                <td class="text-end">Rp {{ number_format($saldoAkhir, 0, ',', '.') }}</td>
+                <td class="text-end mono">Rp {{ number_format($saldoAkhir, 0, ',', '.') }}</td>
             </tr>
         </tfoot>
     </table>

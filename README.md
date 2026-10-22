@@ -27,7 +27,7 @@ Aplikasi web monitoring & evaluasi (Monev) anggaran serta pencatatan transaksi k
 - Composer
 - MySQL/MariaDB (atau SQLite untuk pengembangan)
 
-> Aset frontend (Bootstrap, Font Awesome, Google Fonts) dimuat via CDN, sehingga Node.js/npm tidak diperlukan.
+> Aset frontend (Bootstrap, Font Awesome, Google Fonts) dimuat via CDN, ditambah stylesheet lokal `public/css/buku-kas.css`; Node.js/npm tidak diperlukan.
 
 ## Instalasi
 

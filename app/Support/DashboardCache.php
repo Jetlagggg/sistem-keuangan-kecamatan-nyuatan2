@@ -88,7 +88,7 @@ class DashboardCache
     public static function stages()
     {
         return Cache::remember('dashboard.stages', now()->addMinutes(self::TTL_MINUTES), function () {
-            return BudgetStage::orderBy('tanggal_cair', 'desc')->get();
+            return BudgetStage::orderBy('tanggal_cair')->orderBy('id')->get();
         });
     }
 }

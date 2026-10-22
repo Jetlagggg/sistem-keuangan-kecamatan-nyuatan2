@@ -3,78 +3,110 @@
 @section('title', 'Transaksi Keuangan')
 
 @section('content')
-    <div class="row">
+    <div class="page-head">
+        <div>
+            <h1 class="page-title">Transaksi Keuangan</h1>
+            <p class="page-sub">Catat pengeluaran harian, telusuri riwayatnya, dan cetak laporan tanpa meninggalkan buku kas.</p>
+        </div>
+        <div class="page-actions">
+            <span class="meta-line">{{ $transactions->total() }} transaksi tercatat</span>
+        </div>
+    </div>
+
+    <div class="row g-4">
         @can('create', App\Models\Transaction::class)
-        <div class="col-md-4 mb-4">
-            <div class="card h-100 border-0 shadow-sm">
-                <div class="card-header-camat"><i class="fa-solid fa-pen-to-square me-2"></i> Input Transaksi Baru</div>
-                <div class="card-body p-4">
+        <div class="col-lg-4">
+            <section class="sheet" aria-labelledby="input-title">
+                <div class="sheet-head">
+                    <h2 class="sheet-title" id="input-title">Input Transaksi Baru</h2>
+                    <span class="sheet-meta">Pengeluaran</span>
+                </div>
+                <div class="sheet-body">
                     <form action="{{ route('transactions.store') }}" method="POST">
                         @csrf
                         <div class="mb-3">
-                            <label class="fw-bold small text-muted mb-1">TANGGAL</label>
-                            <input type="date" name="tanggal" class="form-control" value="{{ date('Y-m-d') }}" required>
+                            <label class="form-label" for="tanggal">Tanggal</label>
+                            <input type="date" id="tanggal" name="tanggal" class="form-control" value="{{ date('Y-m-d') }}" required>
                         </div>
                         <div class="mb-3">
-                            <label class="fw-bold small text-muted mb-1">SUMBER DANA (GU)</label>
-                            <select name="budget_stage_id" class="form-select" required>
-                                <option value="">-- Pilih Sumber Dana --</option>
+                            <label class="form-label" for="budget_stage_id">Sumber Dana (GU)</label>
+                            <select name="budget_stage_id" id="budget_stage_id" class="form-select" required>
+                                <option value="">— Pilih Sumber Dana —</option>
                                 @foreach($stages as $stage)
                                     <option value="{{ $stage->id }}">{{ $stage->nama_tahap }}</option>
                                 @endforeach
                             </select>
                         </div>
                         <div class="mb-3">
-                            <label class="fw-bold small text-muted mb-1">POS ANGGARAN</label>
+                            <label class="form-label" for="pilihKategori">Pos Anggaran</label>
                             <select name="category_id" id="pilihKategori" class="form-select" required>
-                                <option value="" data-sisa="0">-- Pilih Pos --</option>
+                                <option value="" data-sisa="0">— Pilih Pos —</option>
                                 @foreach($categories as $c)
-                                    <option value="{{ $c->id }}" data-sisa="{{ $c->sisa_saat_ini }}">{{ $c->nama }} (Sisa: {{ number_format($c->sisa_saat_ini) }})</option>
+                                    <option value="{{ $c->id }}" data-sisa="{{ $c->sisa_saat_ini }}">{{ $c->nama }} (Sisa: {{ number_format($c->sisa_saat_ini, 0, ',', '.') }})</option>
                                 @endforeach
                             </select>
                         </div>
                         <div class="mb-3">
-                            <label class="fw-bold small text-muted mb-1">NOMINAL (Rp)</label>
+                            <label class="form-label" for="inputNominal">Nominal (Rp)</label>
                             <input type="text" name="nominal" id="inputNominal" class="form-control input-rupiah" placeholder="0" required disabled>
-                            <small id="pesanSisa" class="d-block mt-1 fw-bold" style="font-size: 11px;"></small>
+                            <small id="pesanSisa" class="form-hint" aria-live="polite"></small>
                         </div>
                         <div class="mb-3">
-                            <label class="fw-bold small text-muted mb-1">PENERIMA</label>
-                            <input type="text" name="penerima" class="form-control">
+                            <label class="form-label" for="penerima">Penerima</label>
+                            <input type="text" id="penerima" name="penerima" class="form-control" placeholder="Nama penerima">
                         </div>
                         <div class="mb-3">
-                            <label class="fw-bold small text-muted mb-1">URAIAN</label>
-                            <textarea name="keterangan" class="form-control" rows="2"></textarea>
+                            <label class="form-label" for="keterangan">Uraian</label>
+                            <textarea id="keterangan" name="keterangan" class="form-control" rows="3" placeholder="Keperluan pengeluaran"></textarea>
                         </div>
-                        <button type="submit" id="btnSimpan" class="btn btn-simpan w-100 py-2" disabled>SIMPAN DATA</button>
+                        <div class="form-actions">
+                            <button type="submit" id="btnSimpan" class="btn btn-primary" disabled>Simpan Transaksi</button>
+                        </div>
+                        <small class="form-hint" style="margin-top: 12px;">Nominal ditahan terhadap sisa pagu pos dan sisa dana tahap di server.</small>
                     </form>
                 </div>
-            </div>
+            </section>
         </div>
         @endcan
 
-        <div class="col-md-8 mb-4">
-            <div class="row mb-3">
-                <div class="col-md-4"><div class="card bg-success text-white p-3 text-center shadow-sm"><small>Total Pagu</small><h6 class="fw-bold">Rp {{ number_format($paguGlobal, 0, ',', '.') }}</h6></div></div>
-                <div class="col-md-4"><div class="card bg-danger text-white p-3 text-center shadow-sm"><small>Total Realisasi</small><h6 class="fw-bold">Rp {{ number_format($totalKeluar, 0, ',', '.') }}</h6></div></div>
-                <div class="col-md-4"><div class="card bg-primary text-white p-3 text-center shadow-sm"><small>Sisa Kas</small><h6 class="fw-bold">Rp {{ number_format($saldoAkhir, 0, ',', '.') }}</h6></div></div>
-            </div>
+        <div class="{{ auth()->user()->can('create', App\Models\Transaction::class) ? 'col-lg-8' : 'col-12' }}">
+            <section class="ledger-summary compact" aria-label="Ringkasan kas">
+                <div class="summary-cell">
+                    <div class="summary-label">Total Pagu</div>
+                    <div class="summary-value">Rp {{ number_format($paguGlobal, 0, ',', '.') }}</div>
+                    <div class="summary-note">Dana masuk seluruh tahap</div>
+                </div>
+                <div class="summary-cell">
+                    <div class="summary-label">Total Realisasi</div>
+                    <div class="summary-value">Rp {{ number_format($totalKeluar, 0, ',', '.') }}</div>
+                    <div class="summary-note">Pengeluaran tercatat</div>
+                </div>
+                <div class="summary-cell {{ $saldoAkhir < 0 ? 'is-negative' : '' }}">
+                    <div class="summary-label">Sisa Kas</div>
+                    <div class="summary-value">{{ $saldoAkhir < 0 ? '−' : '' }}Rp {{ number_format(abs($saldoAkhir), 0, ',', '.') }}</div>
+                    <div class="summary-note">Pagu dikurangi realisasi</div>
+                </div>
+            </section>
 
             @if($jumlahPending > 0)
-            <div class="alert alert-warning border-0 shadow-sm d-flex justify-content-between align-items-center">
-                <span><i class="fa-solid fa-hourglass-half me-2"></i>{{ $jumlahPending }} transaksi menunggu verifikasi (Rp {{ number_format($totalPending, 0, ',', '.') }}).</span>
-                <a href="{{ route('transactions.index', ['status' => 'draft']) }}" class="btn btn-sm btn-dark fw-bold">Lihat</a>
+            <div class="alert alert-warning d-flex flex-wrap justify-content-between align-items-center gap-2" role="status">
+                <span><i class="fa-solid fa-hourglass-half me-2" aria-hidden="true"></i>{{ $jumlahPending }} transaksi menunggu verifikasi (Rp {{ number_format($totalPending, 0, ',', '.') }}).</span>
+                <a href="{{ route('transactions.index', ['status' => 'draft']) }}" class="btn btn-sm btn-primary">Lihat</a>
             </div>
             @endif
 
-            <div class="card mb-3 border-0 shadow-sm">
-                <div class="card-body p-3 bg-white rounded">
+            <section class="sheet" aria-labelledby="filter-title">
+                <div class="sheet-head">
+                    <h2 class="sheet-title" id="filter-title">Filter &amp; Cetak</h2>
+                    <span class="sheet-meta">Laporan mengikuti filter aktif</span>
+                </div>
+                <div class="sheet-body">
                     <form action="{{ route('transactions.index') }}" method="GET" id="searchForm">
-                        <div class="row g-2 align-items-end">
-                            <div class="col-md-2">
-                                <label class="small text-muted fw-bold">Filter GU</label>
-                                <select name="budget_stage_id" class="form-select form-select-sm" onchange="this.form.submit()">
-                                    <option value="">-- Semua GU --</option>
+                        <div class="filter-bar">
+                            <div class="filter-field gu">
+                                <label class="form-label" for="filter-gu">Filter GU</label>
+                                <select name="budget_stage_id" id="filter-gu" class="form-select" onchange="this.form.submit()">
+                                    <option value="">— Semua GU —</option>
                                     @foreach($stages as $stg)
                                         <option value="{{ $stg->id }}" {{ request('budget_stage_id') == $stg->id ? 'selected' : '' }}>
                                             {{ $stg->nama_tahap }}
@@ -82,100 +114,111 @@
                                     @endforeach
                                 </select>
                             </div>
-                            <div class="col-md-2">
-                                <label class="small text-muted fw-bold">Cari Uraian / Penerima</label>
-                                <input type="text" name="keyword" class="form-control form-control-sm" value="{{ request('keyword') }}" placeholder="Kata kunci...">
+                            <div class="filter-field keyword">
+                                <label class="form-label" for="filter-keyword">Cari Uraian / Penerima</label>
+                                <input type="text" name="keyword" id="filter-keyword" class="form-control" value="{{ request('keyword') }}" placeholder="Kata kunci">
                             </div>
-                            <div class="col-md-2">
-                                <label class="small text-muted fw-bold">Dari Tanggal</label>
-                                <input type="date" name="start_date" class="form-control form-control-sm" value="{{ request('start_date') }}">
+                            <div class="filter-field date">
+                                <label class="form-label" for="filter-start">Dari Tanggal</label>
+                                <input type="date" name="start_date" id="filter-start" class="form-control" value="{{ request('start_date') }}">
                             </div>
-                            <div class="col-md-2">
-                                <label class="small text-muted fw-bold">Sampai Tanggal</label>
-                                <input type="date" name="end_date" class="form-control form-control-sm" value="{{ request('end_date') }}">
+                            <div class="filter-field date">
+                                <label class="form-label" for="filter-end">Sampai Tanggal</label>
+                                <input type="date" name="end_date" id="filter-end" class="form-control" value="{{ request('end_date') }}">
                             </div>
-                            <div class="col-md-2">
-                                <label class="small text-muted fw-bold">Status</label>
-                                <select name="status" class="form-select form-select-sm" onchange="this.form.submit()">
-                                    <option value="">-- Semua --</option>
+                            <div class="filter-field status">
+                                <label class="form-label" for="filter-status">Status</label>
+                                <select name="status" id="filter-status" class="form-select" onchange="this.form.submit()">
+                                    <option value="">— Semua —</option>
                                     <option value="draft" {{ request('status') === 'draft' ? 'selected' : '' }}>Menunggu</option>
                                     <option value="disetujui" {{ request('status') === 'disetujui' ? 'selected' : '' }}>Disetujui</option>
                                     <option value="ditolak" {{ request('status') === 'ditolak' ? 'selected' : '' }}>Ditolak</option>
                                 </select>
                             </div>
-                            <div class="col-md-2 d-flex gap-1">
-                                <button type="submit" class="btn btn-dark btn-sm fw-bold flex-fill" title="Cari"><i class="fa-solid fa-magnifying-glass"></i></button>
-                                <a href="{{ route('transactions.cetak', request()->all()) }}" target="_blank" class="btn btn-secondary btn-sm fw-bold flex-fill" title="Cetak PDF">
-                                    <i class="fa-solid fa-file-pdf"></i>
-                                </a>
-                                <a href="{{ route('transactions.export', request()->all()) }}" class="btn btn-success btn-sm fw-bold flex-fill" title="Ekspor Excel/CSV">
-                                    <i class="fa-solid fa-file-excel"></i>
-                                </a>
+                            <div class="filter-field actions">
+                                <button type="submit" class="btn btn-primary"><i class="fa-solid fa-magnifying-glass me-1" aria-hidden="true"></i> Cari</button>
+                                <a href="{{ route('transactions.cetak', request()->all()) }}" target="_blank" class="btn btn-secondary"><i class="fa-solid fa-print me-1" aria-hidden="true"></i> Cetak</a>
+                                <a href="{{ route('transactions.export', request()->all()) }}" class="btn btn-secondary"><i class="fa-solid fa-file-excel me-1" aria-hidden="true"></i> CSV</a>
                             </div>
                         </div>
                     </form>
                 </div>
-            </div>
+            </section>
 
-            <div class="card border-0 shadow-sm">
-                <div class="card-body p-0">
-                    <div class="table-responsive">
-                        <table class="table table-hover align-middle mb-0">
-                            <thead class="bg-light small"><tr><th class="ps-4">TANGGAL</th><th>URAIAN</th><th class="text-end">NOMINAL</th><th class="text-center">AKSI</th></tr></thead>
-                            <tbody>
-                                @forelse($transactions as $t)
-                                @php
-                                    $statusMeta = match ($t->status) {
-                                        \App\Models\Transaction::STATUS_DISETUJUI => ['Disetujui', 'success'],
-                                        \App\Models\Transaction::STATUS_DITOLAK => ['Ditolak', 'danger'],
-                                        default => ['Menunggu', 'warning text-dark'],
-                                    };
-                                @endphp
-                                <tr>
-                                    <td class="ps-4 small text-muted">
-                                        {{ $t->tanggal->format('d/m/Y') }}
-                                        <div class="mt-1 d-flex flex-column gap-1 align-items-start">
-                                            <span class="badge bg-light text-dark border">{{ $t->budgetStage->nama_tahap ?? 'Non-GU' }}</span>
-                                            <span class="badge bg-{{ $statusMeta[1] }}">{{ $statusMeta[0] }}</span>
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <div class="fw-bold">{{ $t->category->nama ?? 'Umum' }}</div>
-                                        <div class="small text-muted">{{ $t->keterangan }}</div>
-                                        @if($t->penerima) <div class="small text-primary fst-italic"><i class="fa-solid fa-user me-1"></i> {{ $t->penerima }}</div> @endif
-                                    </td>
-                                    <td class="text-end text-danger fw-bold">- Rp {{ number_format($t->nominal, 0, ',', '.') }}</td>
-                                    <td class="text-center text-nowrap">
+            <section class="sheet" aria-labelledby="buku-title">
+                <div class="sheet-head">
+                    <h2 class="sheet-title" id="buku-title">Buku Transaksi</h2>
+                    <span class="sheet-meta">{{ $transactions->count() }} baris di halaman ini</span>
+                </div>
+                <div class="table-responsive">
+                    <table class="table-ledger">
+                        <thead>
+                            <tr>
+                                <th scope="col">Tanggal</th>
+                                <th scope="col">Uraian</th>
+                                <th scope="col" class="num">Nominal</th>
+                                <th scope="col" class="center">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse($transactions as $t)
+                            @php
+                                $statusMeta = match ($t->status) {
+                                    \App\Models\Transaction::STATUS_DISETUJUI => ['Disetujui', 'tag-green'],
+                                    \App\Models\Transaction::STATUS_DITOLAK => ['Ditolak', 'tag-red'],
+                                    default => ['Menunggu', 'tag-muted'],
+                                };
+                            @endphp
+                            <tr>
+                                <td class="cell-date">
+                                    {{ $t->tanggal->format('d/m/Y') }}
+                                    <span class="cell-meta">{{ $t->budgetStage->nama_tahap ?? 'Non-GU' }}</span>
+                                    <span class="tag {{ $statusMeta[1] }}">{{ $statusMeta[0] }}</span>
+                                </td>
+                                <td>
+                                    <span class="cell-strong">{{ $t->category->nama ?? 'Umum' }}</span>
+                                    @if($t->keterangan)
+                                    <span class="cell-sub">{{ $t->keterangan }}</span>
+                                    @endif
+                                    @if($t->penerima)
+                                    <span class="cell-meta"><i class="fa-regular fa-user me-1" aria-hidden="true"></i>{{ $t->penerima }}</span>
+                                    @endif
+                                </td>
+                                <td class="num" style="color: var(--red);">− Rp {{ number_format($t->nominal, 0, ',', '.') }}</td>
+                                <td class="center">
+                                    <div class="d-flex gap-1 justify-content-center flex-wrap">
                                         @can('verify', $t)
                                         @if($t->isDraft())
-                                        <form action="{{ route('transactions.verify', $t->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Setujui transaksi ini?')">
+                                        <form action="{{ route('transactions.verify', $t->id) }}" method="POST" onsubmit="return confirm('Setujui transaksi ini?')">
                                             @csrf
-                                            <button class="btn btn-sm btn-success" title="Setujui"><i class="fa-solid fa-check"></i></button>
+                                            <button class="btn btn-sm btn-outline-success">Setujui</button>
                                         </form>
-                                        <form action="{{ route('transactions.reject', $t->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Tolak transaksi ini?')">
+                                        <form action="{{ route('transactions.reject', $t->id) }}" method="POST" onsubmit="return confirm('Tolak transaksi ini?')">
                                             @csrf
-                                            <button class="btn btn-sm btn-warning text-dark" title="Tolak"><i class="fa-solid fa-xmark"></i></button>
+                                            <button class="btn btn-sm btn-outline-danger">Tolak</button>
                                         </form>
                                         @endif
                                         @endcan
                                         @can('delete', $t)
-                                        <form action="{{ route('transactions.destroy', $t->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Hapus?')">
+                                        <form action="{{ route('transactions.destroy', $t->id) }}" method="POST" onsubmit="return confirm('Hapus transaksi ini? Data dipindahkan ke arsip dan dapat dipulihkan admin.')">
                                             @csrf @method('DELETE')
-                                            <button class="btn btn-sm btn-light text-danger" title="Hapus"><i class="fa-solid fa-trash-can"></i></button>
+                                            <button class="btn btn-sm btn-outline-danger">Hapus</button>
                                         </form>
                                         @endcan
-                                    </td>
-                                </tr>
-                                @empty
-                                <tr><td colspan="4" class="text-center py-4 text-muted">Data kosong.</td></tr>
-                                @endforelse
-                            </tbody>
-                        </table>
-                    </div>
+                                    </div>
+                                </td>
+                            </tr>
+                            @empty
+                            <tr class="empty-row">
+                                <td colspan="4">Belum ada transaksi pada filter ini.</td>
+                            </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
                 </div>
-            </div>
+            </section>
 
-            <div class="mt-3">
+            <div>
                 {{ $transactions->links() }}
             </div>
         </div>
@@ -203,7 +246,7 @@
 
                 if (nominal > sisa) {
                     this.classList.add('is-invalid'); btnSimpan.disabled = true;
-                    pesanSisa.innerHTML = `<span class="text-danger fw-bold">Melebihi Anggaran! (Maks: ${new Intl.NumberFormat('id-ID').format(sisa)})</span>`;
+                    pesanSisa.innerHTML = `<span class="text-danger fw-bold">Melebihi anggaran. Maksimal Rp ${new Intl.NumberFormat('id-ID').format(sisa)}</span>`;
                 } else {
                     this.classList.remove('is-invalid'); btnSimpan.disabled = false;
                     pesanSisa.innerHTML = `Sisa Anggaran: Rp ${new Intl.NumberFormat('id-ID').format(sisa)}`;
